@@ -1,0 +1,227 @@
+/* SikmaV2 - assets/css/header.css */
+
+/* Header Variables (Light Theme) */
+:root {
+    --header-bg-light: var(--card-bg-light);
+    --header-shadow-light: 0 4px 12px var(--shadow-light);
+    --header-scrolled-bg-light: color-mix(in srgb, var(--card-bg-light) 95%, var(--shadow-light) 5%);
+    --header-scrolled-shadow-light: 0 6px 20px var(--shadow-light);
+    --header-user-avatar-border-light: var(--primary-color);
+    --header-search-bg-light: var(--input-bg-light);
+    --header-search-border-light: var(--input-border-light);
+    --header-search-button-bg-light: var(--primary-color);
+    --header-search-button-hover-bg-light: var(--primary-hover-color);
+}
+
+/* Header Variables (Dark Theme) */
+.dark-theme {
+    --header-bg-dark: var(--card-bg-dark);
+    --header-shadow-dark: 0 4px 12px var(--shadow-dark);
+    --header-scrolled-bg-dark: color-mix(in srgb, var(--card-bg-dark) 95%, var(--shadow-dark) 10%);
+    --header-scrolled-shadow-dark: 0 6px 20px var(--shadow-dark);
+    --header-user-avatar-border-dark: var(--primary-color); /* Can be same or adjusted */
+    --header-search-bg-dark: var(--input-bg-dark);
+    --header-search-border-dark: var(--input-border-dark);
+    --header-search-button-bg-dark: var(--primary-color);
+    --header-search-button-hover-bg-dark: var(--primary-hover-color);
+}
+
+/* Default to light theme for header variables */
+:root {
+    --header-bg: var(--header-bg-light);
+    --header-shadow: var(--header-shadow-light);
+    --header-scrolled-bg: var(--header-scrolled-bg-light);
+    --header-scrolled-shadow: var(--header-scrolled-shadow-light);
+    --header-user-avatar-border: var(--header-user-avatar-border-light);
+    --header-search-bg: var(--header-search-bg-light);
+    --header-search-border: var(--header-search-border-light);
+    --header-search-button-bg: var(--header-search-button-bg-light);
+    --header-search-button-hover-bg: var(--header-search-button-hover-bg-light);
+}
+.dark-theme {
+    --header-bg: var(--header-bg-dark);
+    --header-shadow: var(--header-shadow-dark);
+    --header-scrolled-bg: var(--header-scrolled-bg-dark);
+    --header-scrolled-shadow: var(--header-scrolled-shadow-dark);
+    --header-user-avatar-border: var(--header-user-avatar-border-dark);
+    --header-search-bg: var(--header-search-bg-dark);
+    --header-search-border: var(--header-search-border-dark);
+    --header-search-button-bg: var(--header-search-button-bg-dark);
+    --header-search-button-hover-bg: var(--header-search-button-hover-bg-dark);
+}
+
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    background-color: var(--header-bg);
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: var(--header-shadow);
+    transition: background-color 0.3s, box-shadow 0.3s, padding 0.3s ease;
+    position: sticky; /* Make header sticky */
+    top: 0;           /* Stick to the top of the main-content-wrapper */
+    z-index: 999;     /* Ensure it's above other content within the wrapper */
+}
+.header.scrolled {
+    box-shadow: var(--header-scrolled-shadow);
+    padding: 12px 25px;
+    background-color: var(--header-scrolled-bg);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.user-profile .avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid var(--header-user-avatar-border);
+    object-fit: cover;
+    transition: border-color 0.3s;
+}
+.user-profile span {
+    font-weight: 600;
+    font-size: 16px; /* Slightly smaller for balance */
+    color: var(--text-color);
+    transition: color 0.3s;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Increased gap */
+}
+
+.notification-icon {
+    position: relative; /* For potential badge */
+}
+.notification-icon i {
+    font-size: 22px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.notification-icon i:hover {
+    color: var(--primary-color);
+}
+/* TODO: Add notification badge styling if needed */
+/* .notification-icon .badge { ... } */
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--header-search-bg);
+    border: 1px solid var(--header-search-border);
+    border-radius: 25px; /* Pill shape */
+    padding: 6px 8px 6px 15px; /* lopsided padding for button */
+    transition: background-color 0.3s, border-color 0.3s, box-shadow 0.2s;
+}
+.search-bar:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+.search-bar input {
+    border: none;
+    outline: none;
+    padding: 8px 0;
+    font-size: 14px;
+    background-color: transparent;
+    min-width: 180px; /* Default width */
+    color: var(--text-color);
+    transition: color 0.3s;
+}
+.search-bar input::placeholder {
+    color: var(--text-muted);
+    transition: color 0.3s;
+}
+.dark-theme .search-bar input::placeholder {
+    color: var(--text-muted-dark);
+}
+
+.search-bar .search-button {
+    background-color: var(--header-search-button-bg);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+.search-bar .search-button:hover {
+    background-color: var(--header-search-button-hover-bg);
+}
+
+
+/* Responsive Header */
+@media (max-width: 768px) {
+    .header {
+        border-radius: 0;
+        margin-left: -15px; /* Extend to screen edges if main-content has padding */
+        margin-right: -15px;
+        padding: 12px 15px;
+        margin-bottom: 15px; /* Reduced margin */
+        position: sticky; /* Ensure it remains sticky on mobile */
+        top: 0;
+    }
+    .header.scrolled {
+        padding: 10px 15px;
+    }
+    .user-profile span {
+        font-size: 14px; /* Smaller name on mobile */
+    }
+    .user-profile .avatar {
+        width: 38px;
+        height: 38px;
+    }
+    .header-actions {
+        gap: 12px;
+    }
+    .search-bar {
+        padding: 4px 6px 4px 12px;
+    }
+    .search-bar input {
+        min-width: 120px; /* Reduced search input width */
+        font-size: 13px;
+    }
+    .search-bar .search-button {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 10px;
+    }
+    .user-profile span {
+        display: none; /* Hide username on very small screens */
+    }
+    .user-profile .avatar {
+        margin-right: 0; /* Remove margin if name is hidden */
+    }
+    .search-bar {
+        /* Optionally hide search bar on very small screens or make it an icon toggle */
+        display: none; 
+        /* If using icon toggle: */
+        /* background-color: transparent; border: none; padding: 0; */
+    }
+    /* .search-bar input { display: none; } */
+    /* .search-bar .search-button { background-color: transparent; color: var(--text-muted); width: auto; height: auto; } */
+    /* .search-bar.active input { display: block; } */
+    
+    .notification-icon i {
+        font-size: 20px;
+    }
+}

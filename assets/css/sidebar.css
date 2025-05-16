@@ -1,0 +1,306 @@
+/* SikmaV2 - assets/css/sidebar.css */
+
+/* Sidebar Variables (Light Theme) */
+:root {
+    --sidebar-bg-light: var(--card-bg-light);
+    --nav-icon-color-light: #7f8c8d;
+    --nav-icon-active-bg-light: var(--primary-color);
+    --nav-icon-active-color-light: #ffffff;
+    --nav-icon-hover-bg-light: #f0f0f0;
+    --nav-icon-hover-color-light: var(--primary-color);
+    --sidebar-shadow-light: 2px 0 8px var(--shadow-light);
+}
+
+/* Sidebar Variables (Dark Theme) */
+.dark-theme {
+    --sidebar-bg-dark: var(--card-bg-dark);
+    --nav-icon-color-dark: #a0a0a0;
+    --nav-icon-active-bg-dark: var(--primary-color); /* Bisa sama atau disesuaikan */
+    --nav-icon-active-color-dark: #ffffff;
+    --nav-icon-hover-bg-dark: #2c2c2c; /* Slightly lighter than card-bg-dark */
+    --nav-icon-hover-color-dark: var(--primary-color);
+    --sidebar-shadow-dark: 2px 0 10px var(--shadow-dark);
+}
+
+/* Default to light theme for sidebar variables */
+:root {
+    --sidebar-bg: var(--sidebar-bg-light);
+    --nav-icon-color: var(--nav-icon-color-light);
+    --nav-icon-active-bg: var(--nav-icon-active-bg-light);
+    --nav-icon-active-color: var(--nav-icon-active-color-light);
+    --nav-icon-hover-bg: var(--nav-icon-hover-bg-light);
+    --nav-icon-hover-color: var(--nav-icon-hover-color-light);
+    --sidebar-shadow: var(--sidebar-shadow-light);
+}
+.dark-theme {
+    --sidebar-bg: var(--sidebar-bg-dark);
+    --nav-icon-color: var(--nav-icon-color-dark);
+    --nav-icon-active-bg: var(--nav-icon-active-bg-dark);
+    --nav-icon-active-color: var(--nav-icon-active-color-dark);
+    --nav-icon-hover-bg: var(--nav-icon-hover-bg-dark);
+    --nav-icon-hover-color: var(--nav-icon-hover-color-dark);
+    --sidebar-shadow: var(--sidebar-shadow-dark);
+}
+
+
+/* Sidebar */
+.sidebar {
+    width: 90px;
+    background-color: var(--sidebar-bg);
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: var(--sidebar-shadow);
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transition: width 0.3s ease, background-color 0.3s, box-shadow 0.3s;
+}
+.sidebar.profile-incomplete-restricted {
+    /* Styles to make sidebar non-interactive if profile is incomplete */
+    pointer-events: none; /* Disable clicks on sidebar itself */
+}
+.sidebar.profile-incomplete-restricted .navigation ul li:not(#nav-profile):not(#nav-logout-li) a {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none; /* Disable clicks on specific links */
+}
+.sidebar.profile-incomplete-restricted .navigation ul li#nav-profile a {
+    /* Highlight profile link */
+    background-color: var(--primary-hover-color) !important;
+    color: white !important;
+    pointer-events: auto; /* Allow clicking profile */
+}
+
+
+.sidebar .logo {
+    margin-bottom: 30px;
+    padding: 0 15px;
+    transition: padding 0.3s ease, margin-bottom 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.sidebar .logo img {
+    width: 50px; /* Slightly smaller for better fit */
+    height: 50px;
+    object-fit: contain;
+    transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+}
+.dark-theme .sidebar .logo img {
+    filter: brightness(0.95) saturate(1.1); /* Subtle adjustment for dark theme */
+}
+.sidebar .logo img:hover {
+    transform: scale(1.08);
+}
+
+.navigation ul {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items when sidebar is wider */
+}
+.navigation ul li {
+    margin-bottom: 15px; /* Slightly reduced margin */
+    text-align: center;
+    width: 100%; /* Ensure li takes full width for centering 'a' */
+}
+.navigation ul li a {
+    color: var(--nav-icon-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 5px;
+    border-radius: 10px; /* Consistent border-radius */
+    width: 70px; /* Increased width for better touch target */
+    height: 70px;
+    margin: 0 auto;
+    transition: background-color 0.2s, color 0.2s, transform 0.2s, width 0.3s ease, height 0.3s ease, box-shadow 0.2s ease;
+}
+.navigation ul li .icon {
+    font-size: 22px;
+    margin-bottom: 5px;
+    transition: font-size 0.3s ease, margin-bottom 0.3s ease;
+}
+.navigation ul li .nav-text {
+    font-size: 11px;
+    font-weight: 500;
+    transition: opacity 0.3s ease, display 0.3s ease; /* Use opacity for smoother transition */
+    white-space: nowrap;
+    opacity: 1;
+}
+
+.navigation ul li.active a,
+.navigation ul li a.active-link { /* Added .active-link for JS control */
+    background-color: var(--nav-icon-active-bg);
+    color: var(--nav-icon-active-color) !important; /* Important to override base color */
+    box-shadow: 0 3px 7px color-mix(in srgb, var(--nav-icon-active-bg) 40%, transparent);
+}
+.navigation ul li.active a .icon,
+.navigation ul li.active a .nav-text,
+.navigation ul li a.active-link .icon,
+.navigation ul li a.active-link .nav-text {
+    color: var(--nav-icon-active-color) !important;
+}
+
+.navigation ul li a:hover:not(.active-link) { /* Don't apply hover if active */
+    background-color: var(--nav-icon-hover-bg);
+    color: var(--nav-icon-hover-color);
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 2px 5px var(--shadow-color);
+}
+.navigation ul li a:hover:not(.active-link) .icon,
+.navigation ul li a:hover:not(.active-link) .nav-text {
+    color: var(--nav-icon-hover-color);
+}
+
+/* Logout Link specific styling (if different from general nav items) */
+.logout-link {
+    /* Uses general .navigation ul li a styles */
+    /* Add specific overrides if needed */
+}
+.logout-link:hover {
+    background-color: color-mix(in srgb, var(--danger-color) 15%, transparent) !important;
+    color: var(--danger-color) !important;
+}
+.dark-theme .logout-link:hover {
+    color: color-mix(in srgb, var(--danger-color) 80%, white 20%) !important;
+}
+.logout-link:hover .icon, .logout-link:hover .nav-text {
+     color: var(--danger-color) !important;
+}
+.dark-theme .logout-link:hover .icon, .dark-theme .logout-link:hover .nav-text {
+     color: color-mix(in srgb, var(--danger-color) 80%, white 20%) !important;
+}
+
+
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+    background-color: var(--card-bg);
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 30px; /* Slightly smaller */
+    height: 30px;
+    font-size: 14px; /* Adjusted */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 25px; /* Adjusted position */
+    right: -15px;
+    box-shadow: 0 2px 5px var(--shadow-color);
+    transition: transform 0.3s ease, right 0.3s ease, background-color 0.3s, color 0.3s, border-color 0.3s;
+    z-index: 1001;
+}
+.sidebar-toggle:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: scale(1.1);
+}
+.sidebar-toggle i {
+    transition: transform 0.3s ease;
+}
+.sidebar.collapsed .sidebar-toggle i {
+    transform: rotate(180deg);
+}
+
+
+/* Collapsed Sidebar Styles */
+.sidebar.collapsed {
+    width: 70px;
+}
+.sidebar.collapsed .logo {
+    padding: 0 10px;
+    margin-bottom: 25px;
+}
+.sidebar.collapsed .logo img {
+    width: 38px; /* Smaller logo when collapsed */
+    height: 38px;
+}
+.sidebar.collapsed .navigation ul li a {
+    width: 50px;
+    height: 50px;
+    padding: 10px;
+}
+.sidebar.collapsed .navigation ul li .nav-text {
+    opacity: 0;
+    display: none; /* Hide text when collapsed */
+}
+.sidebar.collapsed .navigation ul li .icon {
+    font-size: 20px;
+    margin-bottom: 0;
+}
+.sidebar.collapsed .sidebar-toggle {
+    right: -15px; /* Adjust toggle position */
+}
+
+
+/* Responsive Sidebar (Mobile - Bottom Bar) */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: 70px; /* Height of bottom bar */
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        bottom: 0;
+        top: auto; /* Override fixed top */
+        left: 0;
+        box-shadow: 0 -3px 10px var(--sidebar-shadow); /* Shadow on top */
+        padding: 0 10px;
+        z-index: 1001; /* Ensure it's above content */
+    }
+    .sidebar.collapsed { /* Collapsed state doesn't make sense for bottom bar */
+        width: 100%;
+        height: 70px;
+    }
+    .sidebar .logo, .sidebar .sidebar-toggle {
+        display: none; /* Hide logo and toggle on mobile */
+    }
+    .navigation {
+        width: 100%;
+        height: 100%;
+    }
+    .navigation ul {
+        display: flex;
+        flex-direction: row; /* Horizontal layout */
+        width: 100%;
+        height: 100%;
+        justify-content: space-evenly; /* Distribute items evenly */
+        align-items: center;
+        gap: 5px;
+    }
+    .navigation ul li {
+        margin-bottom: 0;
+        flex-grow: 1; /* Allow items to take available space */
+        text-align: center;
+    }
+    .navigation ul li a {
+        width: auto; /* Auto width for flex items */
+        min-width: 55px; /* Minimum touch target */
+        height: 60px; /* Adjusted height */
+        padding: 5px;
+    }
+    .navigation ul li .nav-text {
+        display: block; /* Always show text on mobile */
+        opacity: 1;
+        font-size: 10px;
+    }
+    .navigation ul li .icon {
+        font-size: 18px;
+        margin-bottom: 3px; /* Space between icon and text */
+    }
+    .sidebar.profile-incomplete-restricted .navigation ul li#nav-profile a {
+        /* Adjust highlight for mobile */
+        padding: 5px 10px;
+    }
+}

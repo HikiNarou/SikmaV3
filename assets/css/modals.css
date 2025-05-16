@@ -1,0 +1,172 @@
+/* SikmaV2 - assets/css/modals.css */
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1500; /* Above sidebar, below critical overlays if any */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if modal content is too long */
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+    backdrop-filter: blur(4px);
+    animation: modalFadeIn 0.3s ease-out;
+}
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.modal.show {
+    display: flex; /* Use flex to center content */
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    margin: auto; /* Centering for non-flex fallback, flex handles it better */
+    padding: 25px 30px;
+    border: none; /* Or var(--border-color) if preferred */
+    width: 90%;
+    max-width: 550px; /* Default max-width */
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 8px 25px var(--shadow-color);
+    animation: modalSlideIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    max-height: 90vh; /* Prevent modal from being too tall */
+    display: flex;
+    flex-direction: column;
+}
+@keyframes modalSlideIn {
+    from { transform: translateY(-30px) scale(0.98); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.modal-content.modal-lg {
+    max-width: 800px;
+}
+.modal-content.modal-sm {
+    max-width: 400px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-header h3 {
+    color: var(--text-color);
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0; /* Remove default margin */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal-header h3 i {
+    color: var(--primary-color);
+    font-size: 1.1em;
+}
+
+.close-btn {
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 5px; /* Add some padding for easier click */
+    transition: color 0.2s, transform 0.2s;
+}
+.close-btn:hover {
+    color: var(--danger-color);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.modal-body {
+    overflow-y: auto; /* Scroll for content longer than modal height */
+    padding-right: 5px; /* Space for scrollbar if it appears */
+    margin-bottom: 20px; /* Space before footer */
+    flex-grow: 1; /* Allow body to take available space */
+}
+/* Custom scrollbar for modal body (optional) */
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+.modal-body::-webkit-scrollbar-track {
+    background: var(--input-bg);
+    border-radius: 4px;
+}
+.modal-body::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 4px;
+}
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+
+.modal-footer {
+    padding-top: 15px;
+    margin-top: auto; /* Push footer to bottom if body is short */
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right by default */
+    gap: 10px;
+}
+
+/* Specific for Item Entry Modal in Profile Page */
+.item-entry-modal .form-group {
+    margin-bottom: 15px; /* Slightly less margin in modal */
+}
+.item-entry-modal .modal-fields-group {
+    padding: 10px;
+    background-color: color-mix(in srgb, var(--body-bg) 50%, transparent);
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+.item-entry-modal .modal-fields-group .form-row {
+    gap: 15px;
+}
+
+/* Responsive Modals */
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 20px;
+        max-height: 85vh;
+    }
+    .modal-header h3 {
+        font-size: 18px;
+    }
+    .close-btn {
+        font-size: 24px;
+    }
+}
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+        max-height: 90vh;
+    }
+     .modal-header {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+    }
+    .modal-header h3 {
+        font-size: 16px;
+    }
+    .modal-body {
+        padding-right: 0; /* No space for scrollbar on tiny screens */
+    }
+    .modal-footer {
+        flex-direction: column; /* Stack buttons */
+    }
+    .modal-footer .btn {
+        width: 100%; /* Full width buttons */
+    }
+}

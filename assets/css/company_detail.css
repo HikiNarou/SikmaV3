@@ -1,0 +1,222 @@
+/* SikmaV2 - assets/css/company_detail.css */
+
+.company-detail-page {
+    background-color: var(--card-bg);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px var(--shadow-color);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.btn-back-to-explore {
+    margin-bottom: 25px; /* More space below back button */
+}
+.btn-back-to-explore i {
+    margin-right: 8px;
+}
+
+/* Loading and Error states are styled by main.css */
+/* #companyDetailLoading, #companyDetailErrorMessage */
+
+#companyDetailContentContainer {
+    /* Initially hidden, shown by JS */
+}
+
+.company-detail-header {
+    display: flex;
+    align-items: flex-start; /* Align items to the top */
+    gap: 25px;
+    padding-bottom: 25px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border-color);
+}
+.company-detail-logo img {
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    object-fit: contain; /* Use contain to see full logo */
+    border: 1px solid var(--border-color);
+    background-color: var(--body-bg); /* Light bg for transparent logos */
+}
+.dark-theme .company-detail-logo img {
+    background-color: var(--input-bg-dark);
+}
+
+.company-detail-info h1 { /* Company Name */
+    font-size: 28px;
+    color: var(--text-color);
+    font-family: 'Poppins', 'Roboto', serif;
+    font-weight: 700;
+    margin-bottom: 5px;
+    line-height: 1.2;
+}
+.company-detail-info .company-category-type {
+    font-size: 15px; /* Slightly smaller */
+    color: var(--text-muted);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 10px;
+}
+.company-detail-info .category-tag {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 4px 10px; /* Adjusted padding */
+    border-radius: 20px; /* Pill shape */
+    font-size: 12px; /* Smaller tag text */
+    font-weight: 500;
+    text-transform: capitalize;
+}
+.company-detail-info .company-type-badge {
+    background-color: var(--tag-bg);
+    color: var(--tag-text);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.company-detail-banner img {
+    width: 100%;
+    max-height: 380px; /* Increased max height */
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 30px; /* More space after banner */
+    background-color: var(--body-bg); /* Fallback color */
+}
+
+.company-detail-content .company-section {
+    margin-bottom: 30px;
+}
+.company-detail-content .company-section:last-child {
+    margin-bottom: 0;
+}
+
+.company-detail-content h2 { /* Section titles like "Tentang Perusahaan" */
+    font-size: 20px;
+    color: var(--primary-color);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin-bottom: 15px; /* Space after title */
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--settings-section-border-color); /* Use settings border for consistency */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.company-detail-content h2 i {
+    font-size: 1em; /* Relative to h2 */
+}
+
+.company-detail-content p,
+.company-detail-content ul {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-color); /* Use main text color for paragraphs */
+    margin-bottom: 15px;
+}
+.company-detail-content p:last-child,
+.company-detail-content ul:last-child {
+    margin-bottom: 0;
+}
+
+.company-detail-content ul.styled-list { /* For "Why Intern Here" */
+    list-style: none; /* Remove default bullets */
+    padding-left: 0;
+}
+.company-detail-content ul.styled-list li {
+    padding-left: 25px; /* Space for custom bullet */
+    position: relative;
+    margin-bottom: 10px; /* Space between list items */
+}
+.company-detail-content ul.styled-list li::before {
+    content: "\f00c"; /* FontAwesome check icon */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900; /* Solid icon */
+    color: var(--secondary-color); /* Green check */
+    position: absolute;
+    left: 0;
+    top: 2px; /* Adjust vertical alignment */
+    font-size: 1em;
+}
+
+.company-detail-contact ul {
+    list-style: none;
+    padding: 0;
+}
+.company-detail-contact ul li {
+    margin-bottom: 12px; /* Increased space */
+    font-size: 15px;
+    color: var(--text-color);
+    display: flex;
+    align-items: flex-start; /* Align icon with first line of text */
+}
+.company-detail-contact ul li .icon-contact { /* Class for icons in contact list */
+    margin-right: 12px;
+    color: var(--primary-color);
+    width: 20px; /* Fixed width for alignment */
+    text-align: center;
+    font-size: 1.1em; /* Slightly larger icons */
+    margin-top: 2px; /* Align with text */
+}
+.company-detail-contact ul li a {
+    color: var(--link-color); /* Use theme link color */
+    word-break: break-all; /* Prevent long URLs from breaking layout */
+}
+.company-detail-contact ul li a:hover {
+    color: var(--link-hover-color);
+}
+
+
+/* Responsive adjustments for Company Detail Page */
+@media (max-width: 768px) {
+    .company-detail-page {
+        padding: 20px;
+    }
+    .company-detail-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+    }
+    .company-detail-logo img {
+        margin-bottom: 0; /* Gap handles spacing */
+        width: 80px;
+        height: 80px;
+    }
+    .company-detail-info h1 {
+        font-size: 24px;
+    }
+    .company-detail-info .company-category-type {
+        justify-content: center; /* Center tags */
+        font-size: 14px;
+    }
+    .company-detail-banner img {
+        max-height: 280px;
+        margin-bottom: 20px;
+    }
+    .company-detail-content h2 {
+        font-size: 18px;
+    }
+    .company-detail-content p,
+    .company-detail-content ul {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .company-detail-page {
+        padding: 15px;
+    }
+    .company-detail-info h1 {
+        font-size: 22px;
+    }
+    .company-detail-banner img {
+        max-height: 200px;
+    }
+     .btn-back-to-explore {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+}

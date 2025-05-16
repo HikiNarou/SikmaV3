@@ -1,0 +1,102 @@
+/* SikmaV2 - assets/css/auth_forms.css */
+
+/* Styling untuk Halaman/Container Login & Register */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    background-color: var(--body-bg); /* Menggunakan variabel tema global */
+    padding: 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 2000; /* Di atas segalanya, kecuali mungkin overlay lain */
+    transition: background-color 0.3s;
+}
+
+.auth-form-wrapper {
+    background-color: var(--card-bg);
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px var(--shadow-color);
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.auth-form-wrapper .logo-auth {
+    margin-bottom: 25px;
+}
+
+.auth-form-wrapper .logo-auth img {
+    max-width: 80px;
+    height: auto;
+}
+
+.auth-form-wrapper h1 {
+    font-size: 24px;
+    color: var(--text-color); /* Menggunakan variabel tema */
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.auth-form-wrapper p.subtitle {
+    font-size: 15px;
+    color: var(--text-muted); /* Menggunakan variabel tema */
+    margin-bottom: 25px;
+}
+
+/* Form groups and inputs within auth forms are styled by main.css general form styling */
+/* We can add overrides if needed */
+.auth-form-wrapper .form-group label {
+    color: var(--form-label-color); /* Bisa spesifik jika beda dari default */
+}
+
+.auth-form-wrapper .form-group input {
+    /* Jika ada style khusus untuk input auth, tambahkan di sini */
+    /* Contoh: background-color: var(--input-bg-auth) jika beda */
+}
+
+.auth-form-wrapper .btn-auth {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    margin-top: 10px;
+}
+.auth-form-wrapper .btn-auth:hover {
+    background-color: var(--primary-hover-color);
+}
+.auth-form-wrapper .btn-auth:active {
+    transform: scale(0.98);
+}
+.auth-form-wrapper .btn-auth:disabled {
+    background-color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.auth-form-wrapper .switch-form-link {
+    display: block;
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+.auth-form-wrapper .switch-form-link a {
+    color: var(--primary-color);
+    font-weight: 500;
+    text-decoration: none;
+}
+.auth-form-wrapper .switch-form-link a:hover {
+    text-decoration: underline;
+}
+
+/* Auth messages are styled by main.css */
