@@ -6,7 +6,6 @@ const PageProfile = {
     profilePageMessageDiv: null,
     saveProfileDataBtn: null,
     
-    // Input fields for basic profile info (can be pre-filled)
     firstNameInput: null,
     lastNameInput: null,
     emailInput: null,
@@ -15,7 +14,6 @@ const PageProfile = {
     avatarPreviewPage: null,
     avatarUploadInput: null,
 
-    // Containers for dynamic items
     itemLists: {
         programmingSkill: null,
         framework: null,
@@ -26,65 +24,83 @@ const PageProfile = {
     },
     addItemButtons: null,
 
-    // Modal elements (shared item entry modal)
     itemEntryModal: null,
     itemEntryForm: null,
     itemModalTitle: null,
-    itemNameInputModal: null, // Common name/title input in modal
-    itemTypeInputModal: null, // Hidden input for item type
-    itemIdInputModal: null, // Hidden input for item ID (during edit)
-    modalSpecificFieldsContainer: null, // Container for type-specific fields
+    itemNameInputModal: null,
+    itemTypeInputModal: null,
+    itemIdInputModal: null,
+    modalSpecificFieldsContainer: null,
     itemModalMessageDiv: null,
 
     // State
-    currentProfileData: {}, // To store loaded profile data
-    isEditingItem: false, // Flag for modal edit mode
+    currentProfileData: { // Initialize with empty arrays for dynamic items
+        programmingSkill: [],
+        framework: [],
+        otherSkill: [],
+        education: [],
+        experience: [],
+        socialLink: [],
+        // Basic info will be populated directly
+    }, 
+    isEditingItem: false,
+    editingItemId: null, // To store ID of item being edited
     
-    // Configuration for different item types
     itemTypeConfigs: {
         programmingSkill: { 
             listElementId: 'programmingSkillsListProfile', 
             modalTitle: 'Bahasa Pemrograman', 
             icon: 'fas fa-code',
-            fieldsTemplateId: 'skillFieldsTemplate', // ID of the template in index.php modal
-            displayName: 'Bahasa Pemrograman'
+            fieldsTemplateId: 'skillFieldsTemplate',
+            displayName: 'Bahasa Pemrograman',
+            nameField: 'skill_name', // DB field for the main name
+            fields: ['skill_name', 'skill_level', 'experience_duration']
         },
         framework: { 
             listElementId: 'frameworksListProfile', 
             modalTitle: 'Framework', 
             icon: 'fas fa-cubes',
-            fieldsTemplateId: 'skillFieldsTemplate', // Reuses skill template
-            displayName: 'Framework'
+            fieldsTemplateId: 'skillFieldsTemplate',
+            displayName: 'Framework',
+            nameField: 'framework_name',
+            fields: ['framework_name', 'skill_level', 'experience_duration']
         },
         otherSkill: { 
             listElementId: 'otherSkillsListProfile', 
             modalTitle: 'Keahlian Lain', 
             icon: 'fas fa-tools',
-            fieldsTemplateId: 'skillFieldsTemplate', // Reuses skill template
-            displayName: 'Keahlian Lain'
+            fieldsTemplateId: 'skillFieldsTemplate',
+            displayName: 'Keahlian Lain',
+            nameField: 'skill_name',
+            fields: ['skill_name', 'skill_level', 'experience_duration']
         },
         education: { 
             listElementId: 'educationListProfile', 
             modalTitle: 'Riwayat Pendidikan', 
             icon: 'fas fa-graduation-cap',
             fieldsTemplateId: 'educationFieldsTemplate',
-            displayName: 'Pendidikan'
+            displayName: 'Pendidikan',
+            nameField: 'institution_name',
+            fields: ['institution_name', 'degree', 'field_of_study', 'start_date', 'end_date', 'description']
         },
         experience: { 
             listElementId: 'experienceListProfile', 
             modalTitle: 'Pengalaman Kerja/Proyek', 
             icon: 'fas fa-briefcase',
             fieldsTemplateId: 'experienceFieldsTemplate',
-            displayName: 'Pengalaman'
+            displayName: 'Pengalaman',
+            nameField: 'company_name',
+            fields: ['company_name', 'job_title', 'start_date', 'end_date', 'description']
         },
         socialLink: {
             listElementId: 'socialLinksListProfile',
             modalTitle: 'Link Sosial Media/Portfolio',
             icon: 'fas fa-link',
             fieldsTemplateId: 'socialLinkFieldsTemplate',
-            displayName: 'Link Sosial Media'
+            displayName: 'Link Sosial Media',
+            nameField: 'platform_name', // Or treat 'url' as primary identifier if platform isn't unique
+            fields: ['platform_name', 'url']
         }
-        // Add more types as needed
     },
 
     initialize: () => {
@@ -102,23 +118,20 @@ const PageProfile = {
         PageProfile.avatarPreviewPage = UI.getElement('#profile_avatarPreviewPage');
         PageProfile.avatarUploadInput = UI.getElement('#profile_avatarUpload');
 
-        // Initialize item list containers
         for (const type in PageProfile.itemTypeConfigs) {
             const config = PageProfile.itemTypeConfigs[type];
             PageProfile.itemLists[type] = UI.getElement(`#${config.listElementId}`);
         }
         PageProfile.addItemButtons = UI.getAllElements('.add-item-btn');
 
-        // Modal elements
         PageProfile.itemEntryModal = UI.getElement('#itemEntryModal');
         PageProfile.itemEntryForm = UI.getElement('#itemEntryForm');
         PageProfile.itemModalTitle = UI.getElement('#itemModalTitle');
-        PageProfile.itemNameInputModal = UI.getElement('#itemName'); // Common name field in modal
+        PageProfile.itemNameInputModal = UI.getElement('#itemName');
         PageProfile.itemTypeInputModal = UI.getElement('#itemType');
-        PageProfile.itemIdInputModal = UI.getElement('#itemId');
+        PageProfile.itemIdInputModal = UI.getElement('#itemId'); // This is the client-side temp ID or DB ID
         PageProfile.modalSpecificFieldsContainer = UI.getElement('#modalSpecificFieldsContainer');
         PageProfile.itemModalMessageDiv = UI.getElement('#itemModalMessage');
-
 
         if (PageProfile.profileForm && PageProfile.saveProfileDataBtn) {
             PageProfile.profileForm.addEventListener('submit', PageProfile.handleSaveFullProfile);
@@ -133,7 +146,7 @@ const PageProfile = {
 
         PageProfile._initAddItemButtons();
         PageProfile._initModalFormSubmit();
-        PageProfile.loadAndDisplayProfileData(); // Load existing data
+        PageProfile.loadAndDisplayProfileData();
 
         console.log("PageProfile: Initialized.");
     },
@@ -146,22 +159,32 @@ const PageProfile = {
         
         for (const type in PageProfile.itemLists) {
             if (PageProfile.itemLists[type]) PageProfile.itemLists[type].innerHTML = '';
+            PageProfile.currentProfileData[type] = []; // Reset data arrays
         }
-        PageProfile.currentProfileData = {};
     },
 
     loadAndDisplayProfileData: async () => {
-        UI.showButtonSpinner(PageProfile.saveProfileDataBtn, 'Simpan Semua Data Profil'); // Show loading on save button
+        if (PageProfile.saveProfileDataBtn) UI.showButtonSpinner(PageProfile.saveProfileDataBtn, 'Simpan Semua Data Profil');
         const response = await Api.getProfileData();
-        UI.hideButtonSpinner(PageProfile.saveProfileDataBtn);
+        if (PageProfile.saveProfileDataBtn) UI.hideButtonSpinner(PageProfile.saveProfileDataBtn);
 
         if (response.status === 'success' && response.data) {
-            PageProfile.currentProfileData = response.data;
-            PageProfile._populateBasicInfo(response.data);
-            PageProfile._populateDynamicItems(response.data);
+            // Store basic info directly
+            PageProfile.currentProfileData.firstName = response.data.firstName;
+            PageProfile.currentProfileData.lastName = response.data.lastName;
+            PageProfile.currentProfileData.bio = response.data.bio;
+            // Avatar, email, nim are part of initialUserData and handled by _populateBasicInfo
+
+            PageProfile._populateBasicInfo(response.data); // Populates form from fetched OR session data
+
+            // Populate dynamic items and store them in currentProfileData arrays
+            for (const itemType in PageProfile.itemTypeConfigs) {
+                const items = response.data[itemType] || [];
+                PageProfile.currentProfileData[itemType] = [...items]; // Store a copy
+                PageProfile._populateDynamicList(itemType, PageProfile.currentProfileData[itemType]);
+            }
         } else {
             UI.showMessage(PageProfile.profilePageMessageDiv, response.message || 'Gagal memuat data profil.', 'error');
-            // Populate with session data as fallback for basic info
             if (window.sikmaApp && window.sikmaApp.initialUserData) {
                  PageProfile._populateBasicInfo(window.sikmaApp.initialUserData);
             }
@@ -171,30 +194,25 @@ const PageProfile = {
     _populateBasicInfo: (userData) => {
         if (!userData) return;
         const nameParts = (userData.nama_lengkap || '').split(' ');
-        if (PageProfile.firstNameInput) PageProfile.firstNameInput.value = nameParts[0] || '';
-        if (PageProfile.lastNameInput) PageProfile.lastNameInput.value = nameParts.slice(1).join(' ');
+        const firstName = userData.firstName || nameParts[0] || '';
+        const lastName = userData.lastName || nameParts.slice(1).join(' ') || '';
+
+        if (PageProfile.firstNameInput) PageProfile.firstNameInput.value = firstName;
+        if (PageProfile.lastNameInput) PageProfile.lastNameInput.value = lastName;
         if (PageProfile.emailInput) PageProfile.emailInput.value = userData.email || '';
         if (PageProfile.nimInput) PageProfile.nimInput.value = userData.nim || '';
         if (PageProfile.bioInput) PageProfile.bioInput.value = userData.bio || '';
         if (PageProfile.avatarPreviewPage) PageProfile.avatarPreviewPage.src = userData.avatar || 'https://placehold.co/100x100/3498db/ffffff?text=U';
     },
 
-    _populateDynamicItems: (profileData) => {
-        for (const itemType in PageProfile.itemTypeConfigs) {
-            const config = PageProfile.itemTypeConfigs[itemType];
-            const listElement = PageProfile.itemLists[itemType];
-            const items = profileData[itemType] || profileData[config.listElementId.replace('ListProfile','')] || []; // Check various key names
-
-            if (listElement) {
-                listElement.innerHTML = ''; // Clear existing items
-                if (Array.isArray(items)) {
-                    items.forEach((item, index) => {
-                        // Item ID could be index or a proper ID from DB
-                        const itemId = item.id || `${itemType}_${index}`; 
-                        PageProfile._addItemToDOM(itemType, item, itemId);
-                    });
-                }
-            }
+    _populateDynamicList: (itemType, itemsArray) => {
+        const listElement = PageProfile.itemLists[itemType];
+        if (listElement) {
+            listElement.innerHTML = ''; // Clear existing items
+            itemsArray.forEach(item => {
+                // item.id from DB is crucial here for edit/delete to work with backend
+                PageProfile._addItemToDOM(itemType, item, item.id || `${itemType}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`);
+            });
         }
     },
     
@@ -213,54 +231,55 @@ const PageProfile = {
         PageProfile.addItemButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const itemType = this.dataset.type;
-                const modalTitle = this.dataset.modalTitle || `Tambah Item ${itemType}`;
-                const iconClass = this.dataset.icon || 'fas fa-plus-square';
-                PageProfile.openItemModal(itemType, modalTitle, iconClass);
+                const config = PageProfile.itemTypeConfigs[itemType];
+                PageProfile.openItemModal(itemType, config.displayName, config.icon);
             });
         });
     },
     
-    openItemModal: (itemType, title, icon, itemDataToEdit = null, itemIdToEdit = null) => {
+    openItemModal: (itemType, title, icon, itemDataToEdit = null, itemId = null) => {
         PageProfile.isEditingItem = !!itemDataToEdit;
+        PageProfile.editingItemId = PageProfile.isEditingItem ? itemId : null;
+
         UI.resetForm(PageProfile.itemEntryForm);
         if (PageProfile.itemModalMessageDiv) UI.hideMessage(PageProfile.itemModalMessageDiv);
 
         PageProfile.itemTypeInputModal.value = itemType;
-        PageProfile.itemIdInputModal.value = PageProfile.isEditingItem ? itemIdToEdit : '';
+        PageProfile.itemIdInputModal.value = PageProfile.editingItemId || ''; // Store client/DB ID
         UI.setModalTitle('itemEntryModal', PageProfile.isEditingItem ? `Edit ${title}` : `Tambah ${title}`, icon);
 
-        // Clear previous specific fields and load new ones
         PageProfile.modalSpecificFieldsContainer.innerHTML = '';
         const config = PageProfile.itemTypeConfigs[itemType];
         if (config && config.fieldsTemplateId) {
             const template = UI.getElement(`#${config.fieldsTemplateId}`);
             if (template) {
                 const clone = template.cloneNode(true);
-                clone.style.display = 'block'; // Make it visible
-                clone.id = ''; // Remove ID from clone to avoid duplicates
+                clone.style.display = 'block';
+                clone.id = '';
                 PageProfile.modalSpecificFieldsContainer.appendChild(clone);
-            } else {
-                console.warn(`Template with ID "${config.fieldsTemplateId}" not found for item type "${itemType}".`);
-            }
-        }
 
-        // Populate form if editing
-        if (PageProfile.isEditingItem && itemDataToEdit) {
-            PageProfile.itemNameInputModal.value = itemDataToEdit.name || itemDataToEdit.itemName || itemDataToEdit.institution_name || itemDataToEdit.company_name || '';
-            
-            // Populate specific fields based on itemType
-            const fields = PageProfile.itemEntryForm.elements;
-            for (const key in itemDataToEdit) {
-                if (fields[key] && key !== 'name' && key !== 'itemName') { // `name` is handled by itemNameInputModal
-                    if (fields[key].type === 'checkbox') {
-                        fields[key].checked = !!itemDataToEdit[key];
-                    } else {
-                        fields[key].value = itemDataToEdit[key];
-                    }
+                // Set common name/title input based on config.nameField
+                // The #itemName input in the modal is the generic one.
+                // We map the specific field from template (e.g. skill_name) to this generic one for UI.
+                if (PageProfile.isEditingItem && itemDataToEdit) {
+                    PageProfile.itemNameInputModal.value = itemDataToEdit[config.nameField] || itemDataToEdit.itemName || '';
+                    
+                    // Populate specific fields from itemDataToEdit
+                    const formElements = PageProfile.itemEntryForm.elements;
+                    config.fields.forEach(fieldKey => {
+                        if (formElements[fieldKey] && itemDataToEdit[fieldKey] !== undefined) {
+                           if (formElements[fieldKey].type === 'checkbox') {
+                                formElements[fieldKey].checked = !!itemDataToEdit[fieldKey];
+                            } else {
+                                formElements[fieldKey].value = itemDataToEdit[fieldKey];
+                            }
+                        }
+                    });
+                } else {
+                     PageProfile.itemNameInputModal.value = ''; // Clear for new item
                 }
             }
         }
-        
         UI.openModal('itemEntryModal');
     },
 
@@ -269,156 +288,144 @@ const PageProfile = {
             PageProfile.itemEntryForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const formData = new FormData(PageProfile.itemEntryForm);
-                const itemData = Object.fromEntries(formData.entries());
-                const itemType = itemData.itemType;
-                const itemId = itemData.itemId; // Will be empty if new, or contain ID if editing
+                const rawItemData = Object.fromEntries(formData.entries());
+                const itemType = rawItemData.itemType;
+                const clientOrDbId = rawItemData.itemId; // This is PageProfile.editingItemId or empty
+                const config = PageProfile.itemTypeConfigs[itemType];
 
-                // Basic validation (can be more specific per type)
-                if (!itemData.itemName && !itemData.name && !itemData.institution_name && !itemData.company_name) { // Check common name fields
-                    UI.showMessage(PageProfile.itemModalMessageDiv, 'Nama/Judul/Institusi wajib diisi.', 'error');
+                // Map generic itemName from modal back to specific field name
+                const specificItemData = {};
+                specificItemData[config.nameField] = rawItemData.itemName; // Use #itemName for the main name
+                
+                config.fields.forEach(fieldKey => {
+                    if (fieldKey !== config.nameField && rawItemData[fieldKey] !== undefined) {
+                        specificItemData[fieldKey] = rawItemData[fieldKey];
+                    }
+                });
+                 if (PageProfile.isEditingItem && clientOrDbId) {
+                    specificItemData.id = clientOrDbId; // Ensure ID is part of the object for update
+                }
+
+
+                if (!specificItemData[config.nameField]) {
+                    UI.showMessage(PageProfile.itemModalMessageDiv, 'Nama/Judul/Institusi utama wajib diisi.', 'error');
                     return;
                 }
                 
-                // Use the more specific name from the form fields for display
-                const displayName = itemData.itemName || itemData.name || itemData.institution_name || itemData.company_name || 'Item';
-                itemData.displayName = displayName; // Add a consistent display name property
-
-                if (PageProfile.isEditingItem && itemId) {
-                    PageProfile._updateItemInDOM(itemType, itemData, itemId);
+                if (PageProfile.isEditingItem && clientOrDbId) {
+                    PageProfile._updateItemInDataStore(itemType, specificItemData, clientOrDbId);
                 } else {
-                    // Generate a temporary client-side ID for new items
-                    const tempId = `${itemType}_${Date.now()}`;
-                    PageProfile._addItemToDOM(itemType, itemData, tempId);
+                    // Add new item to data store with a temporary client ID until saved to DB
+                    const tempClientId = `${itemType}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                    specificItemData.client_id = tempClientId; // Use this for DOM mapping before DB ID is available
+                    PageProfile._addItemToDataStore(itemType, specificItemData);
                 }
+                // Re-render the list for this item type from the data store
+                PageProfile._populateDynamicList(itemType, PageProfile.currentProfileData[itemType]);
                 UI.closeModal('itemEntryModal');
             });
         }
     },
+
+    _addItemToDataStore: (itemType, itemData) => {
+        PageProfile.currentProfileData[itemType].push(itemData);
+    },
+
+    _updateItemInDataStore: (itemType, newItemData, itemIdToUpdate) => {
+        const itemIndex = PageProfile.currentProfileData[itemType].findIndex(item => (item.id === itemIdToUpdate || item.client_id === itemIdToUpdate));
+        if (itemIndex > -1) {
+            // Preserve original ID if it exists (from DB), or client_id if it was a new item not yet saved
+            const originalId = PageProfile.currentProfileData[itemType][itemIndex].id;
+            const originalClientId = PageProfile.currentProfileData[itemType][itemIndex].client_id;
+
+            PageProfile.currentProfileData[itemType][itemIndex] = {...newItemData};
+            
+            if(originalId) PageProfile.currentProfileData[itemType][itemIndex].id = originalId;
+            if(originalClientId && !originalId) PageProfile.currentProfileData[itemType][itemIndex].client_id = originalClientId;
+
+        } else {
+            console.warn("Item not found in data store for update:", itemIdToUpdate);
+        }
+    },
     
-    _addItemToDOM: (itemType, itemData, tempItemId) => {
+    _removeItemFromDataStoreAndDOM: (itemType, itemIdToRemove) => {
+        const listElement = PageProfile.itemLists[itemType];
+        const itemIndex = PageProfile.currentProfileData[itemType].findIndex(item => (item.id === itemIdToRemove || item.client_id === itemIdToRemove));
+        
+        if (itemIndex > -1) {
+            PageProfile.currentProfileData[itemType].splice(itemIndex, 1);
+            // Re-render the list for this item type
+            PageProfile._populateDynamicList(itemType, PageProfile.currentProfileData[itemType]);
+        } else {
+             // Fallback: try to remove from DOM directly if not in data store (should not happen ideally)
+            const itemTag = listElement ? listElement.querySelector(`.item-tag[data-item-id="${itemIdToRemove}"]`) : null;
+            if (itemTag) itemTag.remove();
+        }
+    },
+    
+    _addItemToDOM: (itemType, itemData, displayId) => { // displayId is item.id or item.client_id
         const listElement = PageProfile.itemLists[itemType];
         const config = PageProfile.itemTypeConfigs[itemType];
         if (!listElement || !config) return;
 
-        // Construct details string based on itemType and its specific fields
-        let detailsString = "";
-        if (itemType === 'programmingSkill' || itemType === 'framework' || itemType === 'otherSkill') {
-            detailsString = `Level: ${itemData.itemLevel || 'N/A'}`;
-            if (itemData.itemExperienceDuration) detailsString += `, Peng: ${itemData.itemExperienceDuration}`;
-        } else if (itemType === 'education') {
-            detailsString = `${itemData.educationDegree || ''} di ${itemData.educationFieldOfStudy || ''}`;
-            if(itemData.educationStartDate || itemData.educationEndDate) {
-                detailsString += ` (${itemData.educationStartDate?.replace('-', '/')} - ${itemData.educationEndDate?.replace('-', '/')} )`;
-            }
-        } else if (itemType === 'experience') {
-            detailsString = `${itemData.experienceJobTitle || ''}`;
-             if(itemData.experienceStartDate || itemData.experienceEndDate) {
-                detailsString += ` (${itemData.experienceStartDate?.replace('-', '/')} - ${itemData.experienceEndDate?.replace('-', '/')} )`;
-            }
-        } else if (itemType === 'socialLink') {
-            detailsString = `${itemData.socialPlatform || 'Link'}: ${itemData.socialUrl || ''}`;
-        }
+        let detailsString = PageProfile._getDetailsStringForItem(itemType, itemData);
+        const mainName = itemData[config.nameField] || itemData.itemName || 'N/A';
 
-
-        const itemTag = UI.createItemTag(
-            itemData.displayName, // Use the consistent display name
-            detailsString,
-            config.icon,
-            tempItemId // Use tempId for new items
-        );
+        const itemTag = UI.createItemTag(mainName, detailsString, config.icon, displayId);
         
-        // Attach event listeners for edit/delete on the new tag
         const editBtn = itemTag.querySelector('.edit-item');
         const removeBtn = itemTag.querySelector('.remove-item');
 
         if (editBtn) {
             editBtn.addEventListener('click', () => {
-                // Retrieve full item data (might need to store it on the element or re-construct)
-                // For simplicity, we'll just pass what we have. A better way is to store full object in a data structure.
-                const originalItemData = PageProfile._getItemDataFromDOM(itemTag, itemType);
-                PageProfile.openItemModal(itemType, config.displayName, config.icon, originalItemData, tempItemId);
+                // Find the full item object from our data store
+                const fullItemData = PageProfile.currentProfileData[itemType].find(item => (item.id === displayId || item.client_id === displayId));
+                if (fullItemData) {
+                    PageProfile.openItemModal(itemType, config.displayName, config.icon, fullItemData, displayId);
+                } else {
+                    console.error("Could not find item data for edit:", displayId);
+                }
             });
         }
         if (removeBtn) {
             removeBtn.addEventListener('click', () => {
-                itemTag.remove(); // Remove from DOM
-                // Also remove from PageProfile.currentProfileData if it's managed there
+                // Confirm before removing
+                if (confirm(`Apakah Anda yakin ingin menghapus item "${mainName}"?`)) {
+                    PageProfile._removeItemFromDataStoreAndDOM(itemType, displayId);
+                }
             });
         }
-
         listElement.appendChild(itemTag);
     },
-
-    _updateItemInDOM: (itemType, newItemData, itemIdToUpdate) => {
-        const listElement = PageProfile.itemLists[itemType];
-        const config = PageProfile.itemTypeConfigs[itemType];
-        if (!listElement || !config) return;
-
-        const existingItemTag = listElement.querySelector(`.item-tag[data-item-id="${itemIdToUpdate}"]`);
-        if (existingItemTag) {
-            // Create a new tag with updated data and replace the old one
-            const updatedItemTag = UI.createItemTag(
-                newItemData.displayName,
-                PageProfile._getDetailsStringForItem(itemType, newItemData), // Helper to get details
-                config.icon,
-                itemIdToUpdate
-            );
-            // Re-attach listeners
-            const editBtn = updatedItemTag.querySelector('.edit-item');
-            const removeBtn = updatedItemTag.querySelector('.remove-item');
-            if (editBtn) {
-                editBtn.addEventListener('click', () => {
-                     const originalItemData = PageProfile._getItemDataFromDOM(updatedItemTag, itemType);
-                    PageProfile.openItemModal(itemType, config.displayName, config.icon, originalItemData, itemIdToUpdate);
-                });
-            }
-            if (removeBtn) {
-                removeBtn.addEventListener('click', () => updatedItemTag.remove());
-            }
-            
-            listElement.replaceChild(updatedItemTag, existingItemTag);
-        }
-    },
     
-    _getItemDataFromDOM: (itemTagElement, itemType) => {
-        // This is a simplified way to get data. For complex forms,
-        // it's better to have a JS data structure holding the items.
-        const data = {
-            name: itemTagElement.dataset.itemName, // Common name
-            // Extract other details based on itemType if they were stored in data attributes
-        };
-        // For a real edit, you'd fetch the full item data from your JS store or reconstruct it
-        // from the details string, which is less reliable.
-        // Example for skill:
-        if (itemType === 'programmingSkill' || itemType === 'framework' || itemType === 'otherSkill') {
-            const details = itemTagElement.dataset.itemDetails || "";
-            const levelMatch = details.match(/Level: ([^,]+)/);
-            const expMatch = details.match(/Peng: (.*)/);
-            if (levelMatch) data.itemLevel = levelMatch[1].trim();
-            if (expMatch) data.itemExperienceDuration = expMatch[1].trim();
-        }
-        // Add similar logic for other item types
-        return data;
-    },
-
     _getDetailsStringForItem: (itemType, itemData) => {
-        // Helper to reconstruct details string for display, similar to _addItemToDOM
         let detailsString = "";
-         if (itemType === 'programmingSkill' || itemType === 'framework' || itemType === 'otherSkill') {
-            detailsString = `Level: ${itemData.itemLevel || 'N/A'}`;
-            if (itemData.itemExperienceDuration) detailsString += `, Peng: ${itemData.itemExperienceDuration}`;
-        } else if (itemType === 'education') {
-            detailsString = `${itemData.educationDegree || ''} di ${itemData.educationFieldOfStudy || ''}`;
-            if(itemData.educationStartDate || itemData.educationEndDate) {
-                 detailsString += ` (${itemData.educationStartDate?.replace('-', '/')} - ${itemData.educationEndDate?.replace('-', '/')} )`;
-            }
-        } else if (itemType === 'experience') {
-            detailsString = `${itemData.experienceJobTitle || ''}`;
-             if(itemData.experienceStartDate || itemData.experienceEndDate) {
-                detailsString += ` (${itemData.experienceStartDate?.replace('-', '/')} - ${itemData.experienceEndDate?.replace('-', '/')} )`;
-            }
-        } else if (itemType === 'socialLink') {
-            detailsString = `${itemData.socialPlatform || 'Link'}: ${itemData.socialUrl || ''}`;
+        switch (itemType) {
+            case 'programmingSkill':
+            case 'framework':
+            case 'otherSkill':
+                detailsString = `Level: ${itemData.skill_level || 'N/A'}`;
+                if (itemData.experience_duration) detailsString += `, Peng: ${itemData.experience_duration}`;
+                break;
+            case 'education':
+                detailsString = `${itemData.degree || ''}${itemData.field_of_study ? ' di ' + itemData.field_of_study : ''}`;
+                if (itemData.start_date || itemData.end_date) {
+                    const start = itemData.start_date ? itemData.start_date.replace('-', '/') : '';
+                    const end = itemData.end_date ? itemData.end_date.replace('-', '/') : 'Sekarang';
+                    detailsString += ` (${start} - ${end})`;
+                }
+                break;
+            case 'experience':
+                detailsString = `${itemData.job_title || ''}`;
+                if (itemData.start_date || itemData.end_date) {
+                     const start = itemData.start_date ? itemData.start_date.replace('-', '/') : '';
+                    const end = itemData.end_date ? itemData.end_date.replace('-', '/') : 'Sekarang';
+                    detailsString += ` (${start} - ${end})`;
+                }
+                break;
+            case 'socialLink':
+                detailsString = `${itemData.platform_name || 'Link'}: ${itemData.url || ''}`;
+                break;
         }
         return detailsString;
     },
@@ -431,75 +438,59 @@ const PageProfile = {
             firstName: PageProfile.firstNameInput.value,
             lastName: PageProfile.lastNameInput.value,
             bio: PageProfile.bioInput.value,
-            // Avatar: if changed, PageProfile.avatarUploadInput.files[0] will have it
         };
         
         if (PageProfile.avatarUploadInput.files && PageProfile.avatarUploadInput.files[0]) {
             profilePayload.avatar = PageProfile.avatarUploadInput.files[0];
         }
 
-        // Collect dynamic items
+        // Collect dynamic items from the data store
         for (const itemType in PageProfile.itemTypeConfigs) {
-            const listElement = PageProfile.itemLists[itemType];
-            const items = [];
-            if (listElement) {
-                listElement.querySelectorAll('.item-tag').forEach(tag => {
-                    // This needs to be more robust to collect all data associated with the tag.
-                    // For now, just collecting names as an example.
-                    // In a real scenario, each tag would store its full data object or an ID to retrieve it.
-                    const itemData = {
-                        name: tag.dataset.itemName, // or .querySelector('.item-name').textContent
-                        // ... extract other relevant data from the tag or a JS store ...
-                        // This part is crucial and needs to be designed based on how data is stored/retrieved for edit.
-                        // For items added via modal, the full `itemData` object should be stored with the tag or in a JS array.
-                    };
-                    // Reconstruct details from the tag for submission if not storing full objects client-side
-                    const details = tag.querySelector('.item-details')?.textContent || '';
-                    if (details) {
-                        if (itemType === 'programmingSkill' || itemType === 'framework' || itemType === 'otherSkill') {
-                            const levelMatch = details.match(/Level: ([^,]+)/);
-                            const expMatch = details.match(/Peng: (.*)\)/); // Adjusted regex
-                            if (levelMatch) itemData.itemLevel = levelMatch[1].trim();
-                            if (expMatch) itemData.itemExperienceDuration = expMatch[1].trim();
-                        }
-                        // Add similar reconstruction for other item types
-                    }
-                    items.push(itemData);
-                });
-            }
-            // Backend expects JSON string for these array fields
-            profilePayload[itemType] = JSON.stringify(items); 
+            // Send array of objects. Backend will handle JSON encoding if it receives objects directly,
+            // or frontend can stringify. For FormData, stringifying is safer.
+            profilePayload[itemType] = JSON.stringify(PageProfile.currentProfileData[itemType] || []);
         }
         
-        const response = await Api.saveFullProfileData(profilePayload);
+        const response = await Api.saveFullProfileData(profilePayload); // Api.js uses FormData
         UI.hideButtonSpinner(PageProfile.saveProfileDataBtn);
 
         if (response.status === 'success') {
             UI.showMessage(PageProfile.profilePageMessageDiv, response.message || 'Data profil berhasil disimpan!', 'success');
-            if (response.user_data && response.user_data.is_profile_complete) {
-                window.sikmaApp.initialUserData.is_profile_complete = true;
-                window.sikmaApp.needsProfileCompletion = false;
-                AuthFlow.checkInitialProfileCompletion(); // This will now remove restrictions
-                // Optionally, navigate away from profile page if it was forced
-                // AppCore.navigateToPage('page-home', UI.getElement('a[data-page="page-home"]'), 'Dashboard');
-            }
-             // Update shared UI elements if name/avatar changed
-            if (window.sikmaApp && window.sikmaApp.initialUserData) {
-                // If backend returns updated user object, use it. Otherwise, construct from form.
-                const updatedUserForUI = response.user || { // Assuming backend might return full user on profile save
-                    ...window.sikmaApp.initialUserData,
-                    nama_lengkap: `${profilePayload.firstName} ${profilePayload.lastName}`.trim(),
-                    bio: profilePayload.bio,
-                    avatar: PageProfile.avatarPreviewPage.src // Use preview src as it reflects new upload
-                };
-                UI.updateSharedUserUI(updatedUserForUI);
-                // Also update settings page if it's loaded/cached
-                if (typeof PageSettings !== 'undefined' && PageSettings.isInitialized) {
-                    PageSettings.populateSettingsForm(updatedUserForUI);
+            
+            // Update local data store with IDs from backend if they were returned
+            if (response.saved_item_ids) {
+                for (const itemType in response.saved_item_ids) {
+                    const idMap = response.saved_item_ids[itemType]; // { client_id_1: db_id_1, ... }
+                    PageProfile.currentProfileData[itemType].forEach(item => {
+                        if (item.client_id && idMap[item.client_id]) {
+                            item.id = idMap[item.client_id]; // Assign DB ID
+                            delete item.client_id; // Remove temporary client_id
+                        }
+                    });
+                    // Re-render list to update data-item-id attributes in DOM
+                    PageProfile._populateDynamicList(itemType, PageProfile.currentProfileData[itemType]);
                 }
             }
 
-
+            if (response.user_data && response.user_data.is_profile_complete !== undefined) {
+                window.sikmaApp.initialUserData.is_profile_complete = response.user_data.is_profile_complete;
+                window.sikmaApp.needsProfileCompletion = !response.user_data.is_profile_complete;
+                AuthFlow.checkInitialProfileCompletion(); 
+            }
+            
+            if (window.sikmaApp && window.sikmaApp.initialUserData) {
+                const updatedUserForUI = response.user_data || { 
+                    ...window.sikmaApp.initialUserData,
+                    nama_lengkap: `${profilePayload.firstName} ${profilePayload.lastName}`.trim(),
+                    bio: profilePayload.bio,
+                    avatar: PageProfile.avatarPreviewPage.src 
+                };
+                window.sikmaApp.initialUserData = {...window.sikmaApp.initialUserData, ...updatedUserForUI}; // Merge updates
+                UI.updateSharedUserUI(window.sikmaApp.initialUserData);
+                if (typeof PageSettings !== 'undefined' && PageSettings.isInitialized) {
+                    PageSettings.populateSettingsForm(window.sikmaApp.initialUserData);
+                }
+            }
         } else {
             UI.showMessage(PageProfile.profilePageMessageDiv, response.message || 'Gagal menyimpan data profil.', 'error');
         }

@@ -9,9 +9,6 @@ function userIsLoggedIn() {
 
 function requireLogin() {
     if (!userIsLoggedIn()) {
-        // Mungkin lebih baik mengirim respons JSON jika ini adalah permintaan API
-        // atau redirect jika ini adalah akses halaman langsung yang tidak seharusnya.
-        // Untuk API, kita akan handle di auth.php atau handler spesifik.
         header('Content-Type: application/json');
         echo json_encode(['status' => 'error', 'message' => 'Akses ditolak. Anda harus login.']);
         exit;
@@ -25,8 +22,8 @@ function startUserSession($user) {
     $_SESSION['user_nim'] = $user['nim'];
     $_SESSION['user_avatar'] = $user['avatar'] ?: 'https://placehold.co/80x80/3498db/ffffff?text=' . strtoupper(substr($user['nama_lengkap'],0,1));
     $_SESSION['user_bio'] = $user['bio'] ?? '';
-    // Tambahkan flag kelengkapan profil
-    $_SESSION['is_profile_complete'] = $user['is_profile_complete'] ?? false;
+    // is_profile_complete akan di-set oleh checkProfileCompleteness atau dari DB saat login
+    $_SESSION['is_profile_complete'] = isset($user['is_profile_complete']) ? (bool)$user['is_profile_complete'] : false;
 }
 
 function destroyUserSession() {
@@ -50,30 +47,51 @@ function getCurrentUserData() {
 }
 
 function checkProfileCompleteness($pdo, $userId) {
-    // Implementasi ini sangat bergantung pada definisi "profil lengkap" Anda.
-    // Contoh: memeriksa apakah 'bio' dan 'nim' (jika NIM bisa diedit/ditambah nanti) diisi.
-    // Atau jika ada tabel user_profile_details, periksa apakah data penting ada.
-    // Untuk sekarang, kita akan buat placeholder sederhana.
-    // Anda HARUS menyesuaikan ini.
+    // Definisi "profil lengkap" yang lebih baik:
+    // Minimal bio terisi DAN (ada minimal 1 skill ATAU 1 edukasi ATAU 1 pengalaman)
+    // Anda HARUS menyesuaikan ini dengan kebutuhan aplikasi Anda.
     try {
-        $stmt = $pdo->prepare("SELECT bio, nim, programming_skills FROM users WHERE id = :id"); // Asumsi ada kolom programming_skills
-        $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $userStmt = $pdo->prepare("SELECT bio FROM users WHERE id = :id");
+        $userStmt->bindParam(':id', $userId, PDO::PARAM_INT);
+        $userStmt->execute();
+        $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && !empty($user['bio']) && !empty($user['nim']) /* && !empty($user['programming_skills']) */ ) {
-            // Tandai di session dan database bahwa profil sudah lengkap
-            $_SESSION['is_profile_complete'] = true;
-            $updateStmt = $pdo->prepare("UPDATE users SET is_profile_complete = 1 WHERE id = :id");
-            $updateStmt->bindParam(':id', $userId, PDO::PARAM_INT);
-            $updateStmt->execute();
-            return true;
+        if (!$user || empty(trim($user['bio']))) {
+            $_SESSION['is_profile_complete'] = false;
+            // Optional: Update users table if is_profile_complete is false and was true
+            // $updateStmt = $pdo->prepare("UPDATE users SET is_profile_complete = 0 WHERE id = :id AND is_profile_complete = 1");
+            // $updateStmt->bindParam(':id', $userId, PDO::PARAM_INT);
+            // $updateStmt->execute();
+            return false;
         }
-        $_SESSION['is_profile_complete'] = false; // Pastikan di set false jika belum lengkap
-        return false;
+
+        // Cek apakah ada minimal satu item di tabel-tabel terkait
+        $hasProgrammingSkill = $pdo->query("SELECT 1 FROM user_programming_skills WHERE user_id = $userId LIMIT 1")->fetchColumn();
+        $hasFramework = $pdo->query("SELECT 1 FROM user_frameworks WHERE user_id = $userId LIMIT 1")->fetchColumn();
+        $hasOtherSkill = $pdo->query("SELECT 1 FROM user_other_skills WHERE user_id = $userId LIMIT 1")->fetchColumn();
+        $hasEducation = $pdo->query("SELECT 1 FROM user_education_history WHERE user_id = $userId LIMIT 1")->fetchColumn();
+        $hasExperience = $pdo->query("SELECT 1 FROM user_work_experience WHERE user_id = $userId LIMIT 1")->fetchColumn();
+        $hasSocialLink = $pdo->query("SELECT 1 FROM user_social_links WHERE user_id = $userId LIMIT 1")->fetchColumn();
+
+
+        // Contoh kriteria: bio + (minimal 1 skill ATAU 1 edukasi ATAU 1 pengalaman)
+        $isComplete = !empty(trim($user['bio'])) && 
+                      ($hasProgrammingSkill || $hasFramework || $hasOtherSkill || $hasEducation || $hasExperience || $hasSocialLink);
+
+        $_SESSION['is_profile_complete'] = $isComplete;
+        
+        // Update kolom is_profile_complete di tabel users
+        $updateStmt = $pdo->prepare("UPDATE users SET is_profile_complete = :is_complete WHERE id = :id");
+        $updateStmt->bindValue(':is_complete', $isComplete ? 1 : 0, PDO::PARAM_INT);
+        $updateStmt->bindParam(':id', $userId, PDO::PARAM_INT);
+        $updateStmt->execute();
+        
+        return $isComplete;
+
     } catch (PDOException $e) {
-        error_log("Error checking profile completeness: " . $e->getMessage());
-        return false; // Anggap tidak lengkap jika ada error
+        error_log("Error checking profile completeness for user $userId: " . $e->getMessage());
+        $_SESSION['is_profile_complete'] = false; // Anggap tidak lengkap jika ada error
+        return false; 
     }
 }
 ?>

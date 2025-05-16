@@ -7,63 +7,86 @@
     align-items: center;
     min-height: 100vh;
     width: 100%;
-    background-color: var(--body-bg); /* Menggunakan variabel tema global */
-    padding: 20px;
+    background-color: var(--body-bg); 
+    padding: 20px; /* Padding di container luar untuk spacing dari tepi layar */
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 2000; /* Di atas segalanya, kecuali mungkin overlay lain */
+    z-index: 2000; 
     transition: background-color 0.3s;
 }
 
 .auth-form-wrapper {
     background-color: var(--card-bg);
-    padding: 30px 40px;
+    padding: 30px 35px; /* Padding internal wrapper: Atas/Bawah 30px, Kiri/Kanan 35px */
     border-radius: 12px;
     box-shadow: 0 10px 30px var(--shadow-color);
     width: 100%;
-    max-width: 450px;
+    max-width: 420px; /* PERBAIKAN: Mengurangi max-width agar tidak terlalu lebar */
     text-align: center;
     transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 .auth-form-wrapper .logo-auth {
-    margin-bottom: 25px;
+    margin-bottom: 20px; /* PERBAIKAN: Mengurangi margin bawah logo */
 }
 
 .auth-form-wrapper .logo-auth img {
-    max-width: 80px;
+    max-width: 65px; /* PERBAIKAN: Sedikit lebih kecil jika perlu */
     height: auto;
 }
 
 .auth-form-wrapper h1 {
-    font-size: 24px;
-    color: var(--text-color); /* Menggunakan variabel tema */
-    margin-bottom: 10px;
+    font-size: 22px; /* PERBAIKAN: Ukuran title disesuaikan */
+    color: var(--text-color); 
+    margin-bottom: 8px; 
     font-weight: 600;
+    font-family: 'Poppins', sans-serif; 
 }
 
 .auth-form-wrapper p.subtitle {
-    font-size: 15px;
-    color: var(--text-muted); /* Menggunakan variabel tema */
-    margin-bottom: 25px;
+    font-size: 14px; /* PERBAIKAN: Subtitle sedikit lebih kecil */
+    color: var(--text-muted); 
+    margin-bottom: 25px; 
 }
 
-/* Form groups and inputs within auth forms are styled by main.css general form styling */
-/* We can add overrides if needed */
+.auth-form-wrapper .form-group {
+    margin-bottom: 18px; /* PERBAIKAN: Jarak antar form-group */
+    text-align: left; 
+}
+
 .auth-form-wrapper .form-group label {
-    color: var(--form-label-color); /* Bisa spesifik jika beda dari default */
+    display: block;
+    font-size: 13px; /* PERBAIKAN: Ukuran label disesuaikan */
+    color: var(--form-label-color); 
+    margin-bottom: 6px; /* PERBAIKAN: Jarak label ke input */
+    font-weight: 500;
 }
 
-.auth-form-wrapper .form-group input {
-    /* Jika ada style khusus untuk input auth, tambahkan di sini */
-    /* Contoh: background-color: var(--input-bg-auth) jika beda */
+.auth-form-wrapper .form-group input[type="text"],
+.auth-form-wrapper .form-group input[type="email"],
+.auth-form-wrapper .form-group input[type="password"] {
+    width: 100%;
+    padding: 10px 12px; /* PERBAIKAN: Padding input disesuaikan */
+    font-size: 14px; /* PERBAIKAN: Font size input */
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    color: var(--form-input-text);
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s, color 0.3s;
+    font-family: inherit;
 }
+.auth-form-wrapper .form-group input:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 3px var(--input-focus-shadow);
+}
+
 
 .auth-form-wrapper .btn-auth {
     width: 100%;
-    padding: 12px 20px;
-    font-size: 16px;
+    padding: 12px 20px; /* Padding tombol */
+    font-size: 15px; /* Font size tombol */
     font-weight: 600;
     background-color: var(--primary-color);
     color: white;
@@ -71,7 +94,7 @@
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
-    margin-top: 10px;
+    margin-top: 20px; /* PERBAIKAN: Jarak form group terakhir ke tombol */
 }
 .auth-form-wrapper .btn-auth:hover {
     background-color: var(--primary-hover-color);
@@ -86,8 +109,8 @@
 
 .auth-form-wrapper .switch-form-link {
     display: block;
-    margin-top: 20px;
-    font-size: 14px;
+    margin-top: 20px; 
+    font-size: 13px; /* PERBAIKAN: Font size link */
     color: var(--text-muted);
 }
 .auth-form-wrapper .switch-form-link a {
@@ -100,3 +123,9 @@
 }
 
 /* Auth messages are styled by main.css */
+/* Pastikan pesan error/sukses juga terlihat baik */
+.auth-form-wrapper .auth-message {
+    margin-bottom: 15px; /* Jarak pesan ke form group pertama */
+    padding: 10px 15px;
+    font-size: 13px;
+}
