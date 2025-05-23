@@ -17,7 +17,6 @@ const UI = {
         const div = typeof targetDivOrSelector === 'string' ? UI.getElement(targetDivOrSelector) : targetDivOrSelector;
         if (!div) {
             console.warn('UI.showMessage: Target div not found:', targetDivOrSelector);
-            // Fallback to alert for critical messages if target div not found
             if (type === 'error' || type === 'success') {
                 const alertMessage = typeof messageOrErrors === 'string' ? messageOrErrors : Object.values(messageOrErrors).flat().join('\n');
                 alert(`${type.toUpperCase()}: ${alertMessage}`);
@@ -26,7 +25,7 @@ const UI = {
         }
 
         div.className = 'auth-message'; // Reset classes
-        div.classList.add(type); // Add success, error, info, or warning class
+        div.classList.add(type);
         
         let iconClass = 'fas fa-info-circle';
         if (type === 'success') iconClass = 'fas fa-check-circle';
@@ -37,8 +36,6 @@ const UI = {
         if (typeof messageOrErrors === 'string') {
             messageHTML += UI.escapeHTML(messageOrErrors);
         } else if (typeof messageOrErrors === 'object' && messageOrErrors !== null) {
-            // Handle error object: { field: ["message1", "message2"], general: ["general message"] }
-            // Or simple message: { message: "Some error" }
             if (messageOrErrors.message && Object.keys(messageOrErrors).length === 1) {
                  messageHTML += UI.escapeHTML(messageOrErrors.message);
             } else {
@@ -49,19 +46,18 @@ const UI = {
                             messageHTML += `<li>${UI.escapeHTML(msg)}</li>`;
                         });
                     } else {
-                         messageHTML += `<li>${UI.escapeHTML(messageOrErrors[field])}</li>`; // Fallback for non-array error
+                         messageHTML += `<li>${UI.escapeHTML(messageOrErrors[field])}</li>`;
                     }
                 }
                 messageHTML += "</ul>";
             }
         }
 
-
         div.innerHTML = messageHTML;
-        div.style.display = 'flex'; // auth-message uses flex
+        div.style.display = 'flex';
         div.style.opacity = 1;
 
-        if (div.hideTimeout) clearTimeout(div.hideTimeout); // Clear existing timeout
+        if (div.hideTimeout) clearTimeout(div.hideTimeout);
         if (autoHideDelay > 0) {
             div.hideTimeout = setTimeout(() => {
                 UI.hideMessage(div);
@@ -75,9 +71,9 @@ const UI = {
             div.style.opacity = 0;
             setTimeout(() => {
                 div.style.display = 'none';
-                div.innerHTML = ''; // Clear content after hiding
+                div.innerHTML = '';
                 if (div.hideTimeout) clearTimeout(div.hideTimeout);
-            }, 300); // Match animation duration
+            }, 300);
         }
     },
 
@@ -86,11 +82,10 @@ const UI = {
         const modal = UI.getElement(`#${modalId}`);
         if (modal) {
             modal.classList.add('show');
-            document.body.style.overflow = 'hidden'; // Prevent body scroll
-            // Focus on the first focusable element in the modal
+            document.body.style.overflow = 'hidden';
             const firstFocusable = modal.querySelector('input:not([type="hidden"]), select, button, textarea, [tabindex]:not([tabindex="-1"])');
             if (firstFocusable) {
-                setTimeout(() => firstFocusable.focus(), 50); // Timeout to ensure modal is visible
+                setTimeout(() => firstFocusable.focus(), 50);
             }
         } else {
             console.warn(`Modal with ID "${modalId}" not found.`);
@@ -101,7 +96,7 @@ const UI = {
         const modal = UI.getElement(`#${modalId}`);
         if (modal) {
             modal.classList.remove('show');
-            document.body.style.overflow = ''; // Restore body scroll
+            document.body.style.overflow = '';
         }
     },
 
@@ -120,7 +115,6 @@ const UI = {
         const form = typeof formOrSelector === 'string' ? UI.getElement(formOrSelector) : formOrSelector;
         if (form && typeof form.reset === 'function') {
             form.reset();
-            // Clear any validation messages or states if custom validation is used
             form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
             form.querySelectorAll('.form-error-text').forEach(el => el.remove());
         }
@@ -131,11 +125,46 @@ const UI = {
         if (form) {
             const elements = form.elements;
             for (let i = 0; i < elements.length; i++) {
-                // Disable all input, select, textarea, button elements
                 if (['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(elements[i].tagName)) {
                     elements[i].disabled = disabled;
                 }
             }
+        }
+    },
+
+    /**
+     * Handles avatar preview functionality for a file input.
+     * @param {Event} event - The file input change event.
+     * @param {HTMLImageElement} previewElement - The <img> element for preview.
+     * @param {HTMLElement} messageElement - The element to display error/info messages.
+     * @param {number} [maxFileSizeMB=5] - Maximum file size in MB.
+     * @param {string[]} [allowedTypes=['image/jpeg', 'image/png', 'image/gif']] - Array of allowed MIME types.
+     */
+    handleAvatarPreview: (event, previewElement, messageElement, maxFileSizeMB = 5, allowedTypes = ['image/jpeg', 'image/png', 'image/gif']) => {
+        if (!event || !event.target || !event.target.files || !previewElement || !messageElement) {
+            console.error("UI.handleAvatarPreview: Missing required arguments (event, previewElement, or messageElement).");
+            return;
+        }
+        const fileInput = event.target;
+        const file = fileInput.files[0];
+
+        if (file) {
+            if (file.size > maxFileSizeMB * 1024 * 1024) {
+                UI.showMessage(messageElement, `Ukuran file terlalu besar (Maks ${maxFileSizeMB}MB).`, 'error');
+                fileInput.value = ""; // Reset file input
+                return;
+            }
+            if (!allowedTypes.includes(file.type)) {
+                UI.showMessage(messageElement, `Format file tidak valid (hanya ${allowedTypes.map(t => t.split('/')[1].toUpperCase()).join(', ')}).`, 'error');
+                fileInput.value = ""; // Reset file input
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewElement.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            UI.hideMessage(messageElement); // Clear previous messages if valid
         }
     },
 
@@ -171,21 +200,21 @@ const UI = {
         const sharedAvatarPreview = UI.getElement('#sharedAvatarPreview');
         
         const displayName = userData?.nama_lengkap || 'Pengguna';
-        const defaultAvatar = window.sikmaApp?.baseUrl + '/assets/images/default_avatar.png'; // Path ke avatar default
+        const defaultAvatar = (window.sikmaApp?.baseUrl || '') + '/assets/images/default_avatar.png';
         const displayAvatar = userData?.avatar || defaultAvatar;
 
         if (sharedUserName) sharedUserName.textContent = UI.escapeHTML(displayName);
         if (sharedAvatarPreview) {
             sharedAvatarPreview.src = displayAvatar;
             sharedAvatarPreview.alt = `Avatar ${UI.escapeHTML(displayName)}`;
-            sharedAvatarPreview.onerror = () => { sharedAvatarPreview.src = defaultAvatar; }; // Fallback jika avatar gagal dimuat
+            sharedAvatarPreview.onerror = () => { sharedAvatarPreview.src = defaultAvatar; };
         }
     },
 
     resetSharedUserUI: () => {
         const sharedUserName = UI.getElement('#sharedUserName');
         const sharedAvatarPreview = UI.getElement('#sharedAvatarPreview');
-        const defaultAvatar = window.sikmaApp?.baseUrl + '/assets/images/default_avatar.png';
+        const defaultAvatar = (window.sikmaApp?.baseUrl || '') + '/assets/images/default_avatar.png';
         if (sharedUserName) sharedUserName.textContent = 'Nama Mahasiswa';
         if (sharedAvatarPreview) {
             sharedAvatarPreview.src = defaultAvatar;
@@ -196,7 +225,7 @@ const UI = {
     // Spinner/Loading indication
     showButtonSpinner: (buttonElement, originalText = null, loadingText = 'Memuat...') => {
         if (!buttonElement) return;
-        if (originalText !== null) { // Allow passing explicit original text
+        if (originalText !== null) {
             buttonElement.dataset.originalText = originalText;
         } else if (!buttonElement.dataset.originalText) {
             buttonElement.dataset.originalText = buttonElement.innerHTML;
@@ -211,24 +240,12 @@ const UI = {
         if (buttonElement.dataset.originalText) {
             buttonElement.innerHTML = buttonElement.dataset.originalText;
         }
-        // delete buttonElement.dataset.originalText; // Opsional: hapus setelah restore
     },
 
-    /**
-     * Creates and returns a generic item tag element.
-     * @param {string} name - The main text of the tag.
-     * @param {string} [details] - Optional details text.
-     * @param {string} [iconClass] - Optional FontAwesome icon class for the tag.
-     * @param {string} [itemId] - Optional ID for the item, stored in dataset.
-     * @param {boolean} [canEdit=true] - Whether to show an edit button.
-     * @param {boolean} [canDelete=true] - Whether to show a delete button.
-     * @returns {HTMLElement} The created item tag element.
-     */
     createItemTag: (name, details = '', iconClass = '', itemId = '', canEdit = true, canDelete = true) => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'item-tag';
         if (itemId) itemDiv.dataset.itemId = itemId;
-        // Store original data in dataset for editing purposes
         itemDiv.dataset.itemName = name; 
         if (details) itemDiv.dataset.itemDetails = details;
 
@@ -262,18 +279,27 @@ const UI = {
                 '<': '&lt;',
                 '>': '&gt;',
                 '"': '&quot;',
-                "'": '&#39;' // atau &apos;
+                "'": '&#39;'
             }[match];
         });
     },
 
-    /**
-     * Populates a select dropdown with options.
-     * @param {string|HTMLSelectElement} selectOrSelector - The select element or its selector.
-     * @param {Array<object>|Array<string>} optionsArray - Array of option objects {value: '', text: ''} or strings.
-     * @param {string} [selectedValue] - Optional: The value to be pre-selected.
-     * @param {string} [placeholderText] - Optional: Text for a default, non-selectable placeholder option.
-     */
+    formatErrors: (errors) => { // Helper to format error object from API into string
+        if (typeof errors === 'string') return errors;
+        if (typeof errors === 'object' && errors !== null) {
+            let messages = [];
+            for (const key in errors) {
+                if (Array.isArray(errors[key])) {
+                    messages = messages.concat(errors[key]);
+                } else {
+                    messages.push(errors[key]);
+                }
+            }
+            return messages.join('<br>');
+        }
+        return 'Terjadi kesalahan yang tidak diketahui.';
+    },
+
     populateSelectWithOptions: (selectOrSelector, optionsArray, selectedValue = null, placeholderText = "Pilih...") => {
         const selectElement = typeof selectOrSelector === 'string' ? UI.getElement(selectOrSelector) : selectOrSelector;
         if (!selectElement || selectElement.tagName !== 'SELECT') {
@@ -281,14 +307,14 @@ const UI = {
             return;
         }
 
-        selectElement.innerHTML = ''; // Clear existing options
+        selectElement.innerHTML = '';
 
         if (placeholderText) {
             const placeholderOption = document.createElement('option');
             placeholderOption.value = "";
             placeholderOption.textContent = placeholderText;
-            placeholderOption.disabled = true; // Placeholder tidak bisa dipilih jika sudah ada opsi lain
-            placeholderOption.selected = !selectedValue; // Terpilih jika tidak ada selectedValue
+            // placeholderOption.disabled = true; // Not strictly necessary to disable if value is ""
+            placeholderOption.selected = !selectedValue;
             selectElement.appendChild(placeholderOption);
         }
 
@@ -297,23 +323,22 @@ const UI = {
             if (typeof opt === 'object' && opt !== null && opt.hasOwnProperty('value') && opt.hasOwnProperty('text')) {
                 option.value = opt.value;
                 option.textContent = opt.text;
-            } else { // Array of strings
+            } else {
                 option.value = opt;
                 option.textContent = opt;
             }
             if (selectedValue !== null && String(option.value) === String(selectedValue)) {
                 option.selected = true;
-                if(placeholderText && selectElement.options[0].value === "") selectElement.options[0].selected = false; // Deselect placeholder
+                if(placeholderText && selectElement.options[0].value === "") selectElement.options[0].selected = false;
             }
             selectElement.appendChild(option);
         });
     }
 };
 
-// Global event listener for closing modals
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' || event.key === 'Esc') { // Handle 'Esc' too
+        if (event.key === 'Escape' || event.key === 'Esc') {
             const openModal = UI.getElement('.modal.show');
             if (openModal) {
                 UI.closeModal(openModal.id);
@@ -322,20 +347,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.body.addEventListener('click', (event) => {
-        // Close modal if backdrop is clicked
         if (event.target.classList.contains('modal') && event.target.classList.contains('show')) {
             UI.closeModal(event.target.id);
         }
-        // Close modal if a close button (header or footer) is clicked
         const closeButton = event.target.closest('.close-btn, .close-btn-footer');
         if (closeButton) {
-            const modalId = closeButton.dataset.modalId; // Assuming buttons have data-modal-id
+            const modalId = closeButton.dataset.modalId;
             if (modalId) {
                  const modalToClose = UI.getElement(`#${modalId}`);
                  if (modalToClose && modalToClose.classList.contains('show')) {
                     UI.closeModal(modalId);
                 }
-            } else { // Fallback if no data-modal-id, try to find closest modal
+            } else {
                 const modalToClose = event.target.closest('.modal');
                 if (modalToClose && modalToClose.classList.contains('show')) {
                     UI.closeModal(modalToClose.id);

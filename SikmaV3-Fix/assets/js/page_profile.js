@@ -6,69 +6,56 @@ const PageProfile = {
     profilePageMessageDiv: null,
     saveProfileDataBtn: null,
     
-    // Basic Info Elements
     firstNameInput: null,
     lastNameInput: null,
     emailInput: null,
     nimInput: null,
-    semesterSelect: null, // Baru
-    ipkInput: null,       // Baru
+    semesterSelect: null,
+    ipkInput: null,
     bioInput: null,
     avatarPreviewPage: null,
     avatarUploadInput: null,
-    kotaAsalInput: null,    // Baru
-    kecamatanInput: null,   // Baru
-    kelurahanInput: null,   // Baru
+    kotaAsalInput: null,
+    kecamatanInput: null,
+    kelurahanInput: null,
 
-    // Item List Containers
     itemLists: {
         programmingSkill: null,
         framework: null,
-        tool: null,            // Baru
+        tool: null,
         otherSkill: null,
         education: null,
         experience: null,
         socialLink: null,
-        industryPreference: null // Baru
+        industryPreference: null
     },
     addItemButtons: null,
 
-    // Modal Elements
     itemEntryModal: null,
     itemEntryForm: null,
     itemModalTitle: null,
-    // itemNameInputModal: null, // Tidak lagi generik, akan diambil dari template
-    itemTypeInputModal: null, // Hidden input untuk tipe item
-    itemIdInputModal: null,   // Hidden input untuk ID item (client atau DB)
+    itemTypeInputModal: null,
+    itemIdInputModal: null,
     modalSpecificFieldsContainer: null,
     itemModalMessageDiv: null,
 
-    // State
-    currentProfileData: { // Initialize with empty arrays for dynamic items
-        programmingSkill: [],
-        framework: [],
-        tool: [],
-        otherSkill: [],
-        education: [],
-        experience: [],
-        socialLink: [],
-        industryPreference: [],
-        // Basic info (firstName, lastName, bio, semester, ipk, etc.) akan di-cache di sini juga
+    currentProfileData: {
+        programmingSkill: [], framework: [], tool: [], otherSkill: [],
+        education: [], experience: [], socialLink: [], industryPreference: [],
     }, 
     isEditingItem: false,
-    editingItemId: null, // Menyimpan ID item yang sedang diedit (bisa client_id atau db_id)
+    editingItemId: null,
     isPageInitialized: false,
     
-    // Konfigurasi untuk setiap tipe item dinamis
     itemTypeConfigs: {
         programmingSkill: { 
             listElementId: 'programmingSkillsListProfile', 
             modalTitle: 'Bahasa Pemrograman', 
             icon: 'fas fa-code',
-            fieldsTemplateId: 'skillFieldsTemplate', // Template ini akan digunakan untuk skill, framework, tool, otherSkill
-            nameFieldInTemplate: 'modal_skill_name', // ID input nama utama di template
-            dbNameField: 'skill_name', // Nama kolom di DB untuk nama utama
-            fields: ['skill_name', 'skill_level', 'experience_duration'] // Kolom DB yang relevan
+            fieldsTemplateId: 'skillFieldsTemplate',
+            nameFieldInTemplate: 'modal_skill_name',
+            dbNameField: 'skill_name',
+            fields: ['skill_name', 'skill_level', 'experience_duration']
         },
         framework: { 
             listElementId: 'frameworksListProfile', 
@@ -79,11 +66,11 @@ const PageProfile = {
             dbNameField: 'framework_name',
             fields: ['framework_name', 'skill_level', 'experience_duration']
         },
-        tool: { // Baru
+        tool: {
             listElementId: 'toolsListProfile',
             modalTitle: 'Tool',
-            icon: 'fas fa-wrench', // Ikon disesuaikan
-            fieldsTemplateId: 'skillFieldsTemplate', // Menggunakan template skill
+            icon: 'fas fa-wrench',
+            fieldsTemplateId: 'skillFieldsTemplate',
             nameFieldInTemplate: 'modal_skill_name',
             dbNameField: 'tool_name',
             fields: ['tool_name', 'skill_level', 'experience_duration']
@@ -91,7 +78,7 @@ const PageProfile = {
         otherSkill: { 
             listElementId: 'otherSkillsListProfile', 
             modalTitle: 'Keahlian Lain', 
-            icon: 'fas fa-puzzle-piece', // Ikon diubah
+            icon: 'fas fa-puzzle-piece',
             fieldsTemplateId: 'skillFieldsTemplate',
             nameFieldInTemplate: 'modal_skill_name',
             dbNameField: 'skill_name',
@@ -120,18 +107,18 @@ const PageProfile = {
             modalTitle: 'Link Sosial Media/Portfolio',
             icon: 'fas fa-link',
             fieldsTemplateId: 'socialLinkFieldsTemplate',
-            nameFieldInTemplate: 'modal_platform_name', // Platform sebagai 'nama' utama di modal
-            dbNameField: 'platform_name', // Meskipun URL mungkin lebih unik, platform lebih deskriptif
+            nameFieldInTemplate: 'modal_platform_name',
+            dbNameField: 'platform_name',
             fields: ['platform_name', 'url']
         },
-        industryPreference: { // Baru
+        industryPreference: {
             listElementId: 'industryPreferencesListProfile',
             modalTitle: 'Preferensi Bidang Industri',
             icon: 'fas fa-industry',
             fieldsTemplateId: 'industryPreferenceFieldsTemplate',
             nameFieldInTemplate: 'modal_industry_name',
             dbNameField: 'industry_name',
-            fields: ['industry_name'] // Hanya nama industri
+            fields: ['industry_name']
         }
     },
 
@@ -143,7 +130,6 @@ const PageProfile = {
         PageProfile.profilePageMessageDiv = UI.getElement('#profilePageMessage');
         PageProfile.saveProfileDataBtn = UI.getElement('#saveProfileDataBtn');
 
-        // Cache elemen info dasar
         PageProfile.firstNameInput = UI.getElement('#profile_firstName');
         PageProfile.lastNameInput = UI.getElement('#profile_lastName');
         PageProfile.emailInput = UI.getElement('#profile_email');
@@ -157,19 +143,17 @@ const PageProfile = {
         PageProfile.kecamatanInput = UI.getElement('#profile_kecamatan');
         PageProfile.kelurahanInput = UI.getElement('#profile_kelurahan');
 
-        // Cache elemen list dan tombol tambah
         for (const type in PageProfile.itemTypeConfigs) {
             const config = PageProfile.itemTypeConfigs[type];
             PageProfile.itemLists[type] = UI.getElement(`#${config.listElementId}`);
         }
         PageProfile.addItemButtons = UI.getAllElements('.add-item-btn');
 
-        // Cache elemen modal
         PageProfile.itemEntryModal = UI.getElement('#itemEntryModal');
         PageProfile.itemEntryForm = UI.getElement('#itemEntryForm');
         PageProfile.itemModalTitle = UI.getElement('#itemModalTitle');
-        PageProfile.itemTypeInputModal = UI.getElement('#itemType'); // Hidden input
-        PageProfile.itemIdInputModal = UI.getElement('#itemId');     // Hidden input
+        PageProfile.itemTypeInputModal = UI.getElement('#itemType');
+        PageProfile.itemIdInputModal = UI.getElement('#itemId');
         PageProfile.modalSpecificFieldsContainer = UI.getElement('#modalSpecificFieldsContainer');
         PageProfile.itemModalMessageDiv = UI.getElement('#itemModalMessage');
 
@@ -180,8 +164,10 @@ const PageProfile = {
         
         PageProfile.profileForm.addEventListener('submit', PageProfile.handleSaveFullProfile);
         
-        if (PageProfile.avatarUploadInput && PageProfile.avatarPreviewPage) {
-            PageProfile.avatarUploadInput.addEventListener('change', PageProfile.handleAvatarPreview);
+        if (PageProfile.avatarUploadInput && PageProfile.avatarPreviewPage && PageProfile.profilePageMessageDiv) {
+            PageProfile.avatarUploadInput.addEventListener('change', (event) => {
+                UI.handleAvatarPreview(event, PageProfile.avatarPreviewPage, PageProfile.profilePageMessageDiv);
+            });
         }
 
         PageProfile._initAddItemButtons();
@@ -189,7 +175,6 @@ const PageProfile = {
         
         PageProfile.isPageInitialized = true;
         console.log("PageProfile: Basic initialization complete.");
-        // Data akan dimuat oleh loadPageData() saat halaman aktif
     },
 
     loadPageData: async () => {
@@ -198,26 +183,24 @@ const PageProfile = {
             PageProfile.initialize();
         }
         if (PageProfile.profilePageMessageDiv) UI.hideMessage(PageProfile.profilePageMessageDiv);
-        UI.showButtonSpinner(PageProfile.saveProfileDataBtn, 'Simpan Semua Data Profil', 'Memuat Data...');
+        if (PageProfile.saveProfileDataBtn) UI.showButtonSpinner(PageProfile.saveProfileDataBtn, 'Simpan Semua Data Profil', 'Memuat Data...');
         
         const response = await Api.getProfileData();
-        UI.hideButtonSpinner(PageProfile.saveProfileDataBtn);
+        if (PageProfile.saveProfileDataBtn) UI.hideButtonSpinner(PageProfile.saveProfileDataBtn);
 
         if (response.status === 'success' && response.data) {
-            PageProfile.currentProfileData = { ...PageProfile.currentProfileData, ...response.data }; // Gabungkan data
+            PageProfile.currentProfileData = { ...PageProfile.currentProfileData, ...response.data };
             PageProfile._populateFullProfileForm(response.data);
         } else {
-            UI.showMessage(PageProfile.profilePageMessageDiv, response.message || 'Gagal memuat data profil.', 'error');
-            // Jika gagal load, coba populate dari initialUserData jika ada (misal data sesi)
+            if (PageProfile.profilePageMessageDiv) UI.showMessage(PageProfile.profilePageMessageDiv, response.message || 'Gagal memuat data profil.', 'error');
             if (window.sikmaApp && window.sikmaApp.initialUserData) {
-                 PageProfile._populateFullProfileForm(window.sikmaApp.initialUserData);
+                PageProfile._populateFullProfileForm(window.sikmaApp.initialUserData);
             }
         }
     },
     
     _populateFullProfileForm: (userData) => {
         if (!userData) return;
-        // Populate basic info
         const nameParts = (userData.nama_lengkap || '').split(' ');
         if (PageProfile.firstNameInput) PageProfile.firstNameInput.value = userData.firstName || nameParts[0] || '';
         if (PageProfile.lastNameInput) PageProfile.lastNameInput.value = userData.lastName || nameParts.slice(1).join(' ') || '';
@@ -227,17 +210,17 @@ const PageProfile = {
         if (PageProfile.ipkInput) PageProfile.ipkInput.value = userData.ipk || '';
         if (PageProfile.bioInput) PageProfile.bioInput.value = userData.bio || '';
         if (PageProfile.avatarPreviewPage) {
-            PageProfile.avatarPreviewPage.src = userData.avatar || (window.sikmaApp.baseUrl + '/assets/images/default_avatar.png');
-            PageProfile.avatarPreviewPage.onerror = () => { PageProfile.avatarPreviewPage.src = window.sikmaApp.baseUrl + '/assets/images/default_avatar.png';};
+            const defaultAvatarSrc = (window.sikmaApp?.baseUrl || '') + '/assets/images/default_avatar.png';
+            PageProfile.avatarPreviewPage.src = userData.avatar || defaultAvatarSrc;
+            PageProfile.avatarPreviewPage.onerror = () => { PageProfile.avatarPreviewPage.src = defaultAvatarSrc; };
         }
         if (PageProfile.kotaAsalInput) PageProfile.kotaAsalInput.value = userData.kota_asal || '';
         if (PageProfile.kecamatanInput) PageProfile.kecamatanInput.value = userData.kecamatan || '';
         if (PageProfile.kelurahanInput) PageProfile.kelurahanInput.value = userData.kelurahan || '';
 
-        // Populate dynamic items
         for (const itemType in PageProfile.itemTypeConfigs) {
             const items = userData[itemType] || [];
-            PageProfile.currentProfileData[itemType] = [...items]; // Update data store lokal
+            PageProfile.currentProfileData[itemType] = [...items];
             PageProfile._populateDynamicList(itemType, PageProfile.currentProfileData[itemType]);
         }
     },
@@ -246,49 +229,29 @@ const PageProfile = {
         console.log("PageProfile: Resetting page...");
         if (PageProfile.profileForm) UI.resetForm(PageProfile.profileForm);
         if (PageProfile.profilePageMessageDiv) UI.hideMessage(PageProfile.profilePageMessageDiv);
-        if (PageProfile.avatarPreviewPage) PageProfile.avatarPreviewPage.src = window.sikmaApp.baseUrl + '/assets/images/default_avatar.png';
+        if (PageProfile.avatarPreviewPage && window.sikmaApp?.baseUrl) {
+            PageProfile.avatarPreviewPage.src = window.sikmaApp.baseUrl + '/assets/images/default_avatar.png';
+        }
         
         for (const type in PageProfile.itemLists) {
             if (PageProfile.itemLists[type]) PageProfile.itemLists[type].innerHTML = '';
         }
-        // Reset currentProfileData ke struktur awal dengan array kosong
         PageProfile.currentProfileData = {
             programmingSkill: [], framework: [], tool: [], otherSkill: [],
             education: [], experience: [], socialLink: [], industryPreference: []
-            // Info dasar akan di-clear oleh UI.resetForm
         };
-        // PageProfile.isPageInitialized = false; // Jangan di-reset agar initialize() tidak dipanggil berulang
     },
 
-    handleAvatarPreview: (event) => {
-        const file = event.target.files[0];
-        if (file && PageProfile.avatarPreviewPage) {
-            if (file.size > 5 * 1024 * 1024) { // Maks 5MB
-                UI.showMessage(PageProfile.profilePageMessageDiv, 'Ukuran file avatar terlalu besar (Maks 5MB).', 'error');
-                event.target.value = ""; // Reset file input
-                return;
-            }
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!allowedTypes.includes(file.type)) {
-                UI.showMessage(PageProfile.profilePageMessageDiv, 'Format file avatar tidak valid (hanya JPG, PNG, GIF).', 'error');
-                event.target.value = ""; // Reset file input
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                PageProfile.avatarPreviewPage.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-    },
+    // Removed local handleAvatarPreview, now uses UI.handleAvatarPreview in initialize()
 
     _initAddItemButtons: () => {
         PageProfile.addItemButtons.forEach(button => {
-            button.removeEventListener('click', PageProfile._handleAddItemButtonClick); // Hapus listener lama
+            button.removeEventListener('click', PageProfile._handleAddItemButtonClick);
             button.addEventListener('click', PageProfile._handleAddItemButtonClick);
         });
     },
-    _handleAddItemButtonClick: function() { // 'this' akan merujuk ke tombol
+
+    _handleAddItemButtonClick: function() {
         const itemType = this.dataset.type;
         const config = PageProfile.itemTypeConfigs[itemType];
         if (config) {
@@ -302,47 +265,41 @@ const PageProfile = {
         PageProfile.isEditingItem = !!itemDataToEdit;
         PageProfile.editingItemId = PageProfile.isEditingItem ? clientOrDbId : null;
 
+        if (!PageProfile.itemEntryForm || !PageProfile.itemModalMessageDiv || !PageProfile.itemTypeInputModal || !PageProfile.itemIdInputModal || !PageProfile.modalSpecificFieldsContainer) return;
+        
         UI.resetForm(PageProfile.itemEntryForm);
-        if (PageProfile.itemModalMessageDiv) UI.hideMessage(PageProfile.itemModalMessageDiv);
+        UI.hideMessage(PageProfile.itemModalMessageDiv);
 
         PageProfile.itemTypeInputModal.value = itemType;
         PageProfile.itemIdInputModal.value = PageProfile.editingItemId || ''; 
         UI.setModalTitle('itemEntryModal', PageProfile.isEditingItem ? `Edit ${title}` : `Tambah ${title}`, icon);
 
-        PageProfile.modalSpecificFieldsContainer.innerHTML = ''; // Kosongkan field spesifik
+        PageProfile.modalSpecificFieldsContainer.innerHTML = '';
         const config = PageProfile.itemTypeConfigs[itemType];
         if (config && config.fieldsTemplateId) {
             const template = UI.getElement(`#${config.fieldsTemplateId}`);
             if (template) {
                 const clone = template.cloneNode(true);
-                clone.style.display = 'block'; // Pastikan template terlihat
-                clone.id = ''; // Hapus ID dari clone agar tidak duplikat
+                clone.style.display = 'block';
+                clone.id = '';
                 PageProfile.modalSpecificFieldsContainer.appendChild(clone);
 
-                // Populate form jika sedang edit
                 if (PageProfile.isEditingItem && itemDataToEdit) {
                     const formElements = PageProfile.itemEntryForm.elements;
-                    // Populate field nama utama (misal: skill_name, institution_name)
-                    // yang ada di dalam template yang di-clone
-                    if (formElements[config.nameFieldInTemplate]) {
-                         formElements[config.nameFieldInTemplate].value = itemDataToEdit[config.dbNameField] || '';
-                    }
-
-                    // Populate field spesifik lainnya dari config.fields
                     config.fields.forEach(fieldKey => {
-                        // Jangan populate ulang nama utama jika sudah dihandle di atas
-                        if (fieldKey !== config.dbNameField && formElements[fieldKey] && itemDataToEdit[fieldKey] !== undefined) {
-                           if (formElements[fieldKey].type === 'checkbox') {
-                                formElements[fieldKey].checked = !!itemDataToEdit[fieldKey];
+                        const inputName = (fieldKey === config.dbNameField) ? config.nameFieldInTemplate : fieldKey;
+                        if (formElements[inputName] && itemDataToEdit[fieldKey] !== undefined) {
+                           if (formElements[inputName].type === 'checkbox') {
+                                formElements[inputName].checked = !!itemDataToEdit[fieldKey];
                             } else {
-                                formElements[fieldKey].value = itemDataToEdit[fieldKey];
+                                formElements[inputName].value = itemDataToEdit[fieldKey];
                             }
                         }
                     });
                 }
             } else {
                 console.error("Template not found for ID:", config.fieldsTemplateId);
-                 PageProfile.modalSpecificFieldsContainer.innerHTML = `<p class="text-danger">Error: Template modal untuk tipe item ini tidak ditemukan.</p>`;
+                PageProfile.modalSpecificFieldsContainer.innerHTML = `<p class="text-danger">Error: Template modal untuk tipe item ini tidak ditemukan.</p>`;
             }
         }
         UI.openModal('itemEntryModal');
@@ -350,16 +307,19 @@ const PageProfile = {
 
     _initModalFormSubmit: () => {
         if (PageProfile.itemEntryForm) {
-            PageProfile.itemEntryForm.removeEventListener('submit', PageProfile._handleModalFormSubmit); // Hapus listener lama
+            PageProfile.itemEntryForm.removeEventListener('submit', PageProfile._handleModalFormSubmit);
             PageProfile.itemEntryForm.addEventListener('submit', PageProfile._handleModalFormSubmit);
         }
     },
+
     _handleModalFormSubmit: (e) => {
         e.preventDefault();
+        if (!PageProfile.itemEntryForm || !PageProfile.itemModalMessageDiv) return;
+
         const formData = new FormData(PageProfile.itemEntryForm);
-        const rawItemData = Object.fromEntries(formData.entries()); // Ambil semua data dari form modal
-        const itemType = rawItemData.itemType; // Dari hidden input
-        const clientOrDbId = rawItemData.itemId; // Dari hidden input (PageProfile.editingItemId)
+        const rawItemData = Object.fromEntries(formData.entries());
+        const itemType = rawItemData.itemType;
+        const clientOrDbId = rawItemData.itemId;
         const config = PageProfile.itemTypeConfigs[itemType];
 
         if (!config) {
@@ -367,31 +327,26 @@ const PageProfile = {
             return;
         }
 
-        // Validasi nama utama (misal skill_name, institution_name)
-        // Nama field di form modal (misal modal_skill_name) sudah di-map ke nama kolom DB di rawItemData
-        // oleh atribut 'name' pada input di template.
-        // Jadi, kita cek berdasarkan config.dbNameField
-        if (!rawItemData[config.dbNameField] || rawItemData[config.dbNameField].trim() === '') {
+        const mainNameValue = rawItemData[config.nameFieldInTemplate];
+        if (!mainNameValue || mainNameValue.trim() === '') {
             UI.showMessage(PageProfile.itemModalMessageDiv, `Nama/Judul utama untuk ${config.modalTitle} wajib diisi.`, 'error');
             const nameInputInModal = PageProfile.itemEntryForm.elements[config.nameFieldInTemplate];
-            if(nameInputInModal) nameInputInModal.focus();
+            if (nameInputInModal) nameInputInModal.focus();
             return;
         }
         
-        // Siapkan objek data item yang akan disimpan
         const itemDataToStore = {};
         config.fields.forEach(fieldKey => {
-            // Ambil nilai dari rawItemData (yang key-nya sesuai nama kolom DB)
-            itemDataToStore[fieldKey] = rawItemData[fieldKey] !== undefined ? rawItemData[fieldKey] : null;
+            const formFieldName = (fieldKey === config.dbNameField) ? config.nameFieldInTemplate : fieldKey;
+            itemDataToStore[fieldKey] = rawItemData[formFieldName] !== undefined ? rawItemData[formFieldName] : null;
         });
 
-
         if (PageProfile.isEditingItem && clientOrDbId) {
-            itemDataToStore.id = clientOrDbId; // Pastikan ID ada untuk update (bisa jadi client_id atau db_id)
+            itemDataToStore.id = clientOrDbId;
             PageProfile._updateItemInDataStore(itemType, itemDataToStore, clientOrDbId);
         } else {
             const tempClientId = `${itemType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            itemDataToStore.client_id = tempClientId; // ID sementara untuk item baru
+            itemDataToStore.client_id = tempClientId;
             PageProfile._addItemToDataStore(itemType, itemDataToStore);
         }
         
@@ -412,7 +367,6 @@ const PageProfile = {
             (item.client_id && item.client_id === idToUpdate)
         );
         if (itemIndex > -1) {
-            // Gabungkan data lama dengan data baru, pertahankan ID asli jika ada
             const oldItem = PageProfile.currentProfileData[itemType][itemIndex];
             PageProfile.currentProfileData[itemType][itemIndex] = { ...oldItem, ...newItemData };
         } else {
@@ -428,10 +382,9 @@ const PageProfile = {
         
         if (itemIndex > -1) {
             PageProfile.currentProfileData[itemType].splice(itemIndex, 1);
-            PageProfile._populateDynamicList(itemType, PageProfile.currentProfileData[itemType]); // Re-render list
+            PageProfile._populateDynamicList(itemType, PageProfile.currentProfileData[itemType]);
         } else {
             console.warn("Item not found for removal:", itemIdToRemove, "Type:", itemType);
-            // Fallback: coba hapus dari DOM jika tidak ketemu di data store (seharusnya tidak terjadi)
             const listElement = PageProfile.itemLists[itemType];
             const itemTag = listElement ? listElement.querySelector(`.item-tag[data-item-id="${itemIdToRemove}"]`) : null;
             if (itemTag) itemTag.remove();
@@ -446,15 +399,13 @@ const PageProfile = {
             return;
         }
 
-        listElement.innerHTML = ''; // Clear existing items
+        listElement.innerHTML = '';
         if (itemsArray && itemsArray.length > 0) {
             itemsArray.forEach(item => {
-                // Gunakan item.id (dari DB) jika ada, jika tidak (item baru) gunakan item.client_id
                 const displayId = item.id || item.client_id; 
                 PageProfile._addItemToDOM(itemType, item, displayId);
             });
         }
-        // Placeholder akan otomatis muncul jika listElement kosong (via CSS :empty::before)
     },
 
     _addItemToDOM: (itemType, itemData, displayId) => {
@@ -463,7 +414,7 @@ const PageProfile = {
         if (!listElement || !config) return;
 
         const mainName = itemData[config.dbNameField] || 'N/A';
-        let detailsString = PageProfile._getDetailsStringForItem(itemType, itemData, config);
+        let detailsString = PageProfile._getDetailsStringForItem(itemType, itemData);
         
         const itemTag = UI.createItemTag(mainName, detailsString, config.icon, displayId);
         
@@ -480,7 +431,7 @@ const PageProfile = {
                     PageProfile.openItemModal(itemType, config.modalTitle, config.icon, fullItemData, displayId);
                 } else {
                     console.error("Could not find item data for edit:", displayId, "Type:", itemType);
-                    UI.showMessage(PageProfile.profilePageMessageDiv, 'Gagal mengambil data item untuk diedit.', 'error');
+                    if (PageProfile.profilePageMessageDiv) UI.showMessage(PageProfile.profilePageMessageDiv, 'Gagal mengambil data item untuk diedit.', 'error');
                 }
             });
         }
@@ -494,7 +445,7 @@ const PageProfile = {
         listElement.appendChild(itemTag);
     },
     
-    _getDetailsStringForItem: (itemType, itemData, config) => {
+    _getDetailsStringForItem: (itemType, itemData) => {
         let detailsString = "";
         switch (itemType) {
             case 'programmingSkill':
@@ -510,7 +461,7 @@ const PageProfile = {
                 detailsString = itemData.degree || '';
                 if (itemData.field_of_study) detailsString += (detailsString ? ' di ' : '') + itemData.field_of_study;
                 if (itemData.start_date || itemData.end_date) {
-                    const start = itemData.start_date ? itemData.start_date.substring(0, 7).replace('-', '/') : ''; // YYYY/MM
+                    const start = itemData.start_date ? itemData.start_date.substring(0, 7).replace('-', '/') : '';
                     const end = itemData.end_date ? itemData.end_date.substring(0, 7).replace('-', '/') : 'Sekarang';
                     if (start || end !== 'Sekarang') detailsString += ` (${start} - ${end})`;
                 }
@@ -518,17 +469,15 @@ const PageProfile = {
             case 'experience':
                 detailsString = itemData.job_title || '';
                 if (itemData.start_date || itemData.end_date) {
-                     const start = itemData.start_date ? itemData.start_date.substring(0, 7).replace('-', '/') : '';
+                    const start = itemData.start_date ? itemData.start_date.substring(0, 7).replace('-', '/') : '';
                     const end = itemData.end_date ? itemData.end_date.substring(0, 7).replace('-', '/') : 'Sekarang';
                     if (start || end !== 'Sekarang') detailsString += ` (${start} - ${end})`;
                 }
                 break;
             case 'socialLink':
-                // Nama utama (platform_name) sudah ditampilkan, URL bisa jadi detail jika perlu
-                detailsString = itemData.url ? itemData.url.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0] : ''; // Domain singkat
+                detailsString = itemData.url ? itemData.url.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0] : '';
                 break;
             case 'industryPreference':
-                // Nama utama (industry_name) sudah ditampilkan, tidak ada detail tambahan
                 detailsString = ""; 
                 break;
         }
@@ -537,11 +486,12 @@ const PageProfile = {
 
     handleSaveFullProfile: async (e) => {
         e.preventDefault();
-        if (PageProfile.profilePageMessageDiv) UI.hideMessage(PageProfile.profilePageMessageDiv);
+        if (!PageProfile.profileForm || !PageProfile.profilePageMessageDiv || !PageProfile.saveProfileDataBtn) return;
         
-        // Validasi form dasar
+        UI.hideMessage(PageProfile.profilePageMessageDiv);
+        
         if (!PageProfile.profileForm.checkValidity()) {
-            PageProfile.profileForm.reportValidity(); // Tampilkan pesan validasi browser default
+            PageProfile.profileForm.reportValidity();
             UI.showMessage(PageProfile.profilePageMessageDiv, 'Harap isi semua field yang wajib (*).', 'error');
             return;
         }
@@ -549,17 +499,17 @@ const PageProfile = {
         UI.showButtonSpinner(PageProfile.saveProfileDataBtn, 'Simpan Semua Data Profil', 'Menyimpan...');
 
         const profilePayload = {
-            firstName: PageProfile.firstNameInput.value,
-            lastName: PageProfile.lastNameInput.value,
-            bio: PageProfile.bioInput.value,
-            semester: PageProfile.semesterSelect.value,
-            ipk: PageProfile.ipkInput.value,
-            kota_asal: PageProfile.kotaAsalInput.value,
-            kecamatan: PageProfile.kecamatanInput.value,
-            kelurahan: PageProfile.kelurahanInput.value,
+            firstName: PageProfile.firstNameInput?.value,
+            lastName: PageProfile.lastNameInput?.value,
+            bio: PageProfile.bioInput?.value,
+            semester: PageProfile.semesterSelect?.value,
+            ipk: PageProfile.ipkInput?.value,
+            kota_asal: PageProfile.kotaAsalInput?.value,
+            kecamatan: PageProfile.kecamatanInput?.value,
+            kelurahan: PageProfile.kelurahanInput?.value,
         };
         
-        if (PageProfile.avatarUploadInput.files && PageProfile.avatarUploadInput.files[0]) {
+        if (PageProfile.avatarUploadInput?.files && PageProfile.avatarUploadInput.files[0]) {
             profilePayload.avatar = PageProfile.avatarUploadInput.files[0];
         }
 
@@ -573,41 +523,37 @@ const PageProfile = {
         if (response.status === 'success') {
             UI.showMessage(PageProfile.profilePageMessageDiv, response.message || 'Data profil berhasil disimpan!', 'success');
             
-            // Update local data store dengan ID dari backend
             if (response.saved_item_ids) {
                 for (const itemType in response.saved_item_ids) {
                     if (PageProfile.currentProfileData[itemType]) {
-                        const idMap = response.saved_item_ids[itemType]; // { client_id_1: db_id_1, ... }
+                        const idMap = response.saved_item_ids[itemType];
                         PageProfile.currentProfileData[itemType].forEach(item => {
                             if (item.client_id && idMap[item.client_id]) {
                                 item.id = idMap[item.client_id];
                                 delete item.client_id;
                             }
                         });
-                        // Re-render list untuk update data-item-id di DOM (opsional, karena ID hanya penting untuk edit/delete berikutnya)
-                        // PageProfile._populateDynamicList(itemType, PageProfile.currentProfileData[itemType]);
                     }
                 }
             }
-            // Update data pengguna global dan UI bersama
-            if (response.user_data) { // Backend harus mengembalikan data user yang terupdate
+            if (response.user_data) {
                 window.sikmaApp.initialUserData = { ...window.sikmaApp.initialUserData, ...response.user_data };
                 UI.updateSharedUserUI(window.sikmaApp.initialUserData);
-                 // Update juga form di halaman Settings jika sudah diinisialisasi
                 if (typeof PageSettings !== 'undefined' && PageSettings.isPageInitialized) {
                     PageSettings.populateSettingsForm(window.sikmaApp.initialUserData);
                 }
-                // Cek ulang kelengkapan profil
                 window.sikmaApp.needsProfileCompletion = !response.user_data.is_profile_complete;
-                AuthFlow.checkInitialProfileCompletion(); 
+                if(typeof AuthFlow !== 'undefined') AuthFlow.checkInitialProfileCompletion(); 
             }
         } else {
-            const errorMsg = response.errors ? response.errors : (response.message || 'Gagal menyimpan data profil.');
+            const errorMsg = response.errors ? UI.formatErrors(response.errors) : (response.message || 'Gagal menyimpan data profil.');
             UI.showMessage(PageProfile.profilePageMessageDiv, errorMsg, 'error');
         }
     }
 };
 
-// Panggil initialize dasar saat script dimuat jika elemen sudah ada
-// document.addEventListener('DOMContentLoaded', PageProfile.initialize);
-// Inisialisasi akan dipanggil oleh AppCore.navigateToPage
+document.addEventListener('DOMContentLoaded', () => {
+    if (UI.getElement('#page-profile')) {
+        PageProfile.initialize();
+    }
+});

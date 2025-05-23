@@ -29,23 +29,30 @@ async function fetchAPI(action, options = {}) {
     //     mergedOptions.body = params.toString();
     // }
 
-
     // Automatically set Content-Type for FormData or URLSearchParams
     if (mergedOptions.body instanceof FormData) {
         // FormData sets its own Content-Type with boundary
-        delete mergedOptions.headers['Content-Type']; 
-    } else if (typeof mergedOptions.body === 'string' && mergedOptions.headers['Content-Type'] === undefined) {
-        mergedOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    } else if (typeof mergedOptions.body === 'object' && !(mergedOptions.body instanceof FormData) && mergedOptions.headers['Content-Type'] === undefined) {
+        delete mergedOptions.headers['Content-Type'];
+    } else if (typeof mergedOptions.body === 'object' && !(mergedOptions.body instanceof FormData)) {
         // Jika body adalah objek plain dan bukan FormData, diasumsikan x-www-form-urlencoded
         // Backend saat ini tidak secara eksplisit menangani application/json
         const params = new URLSearchParams();
         for (const key in mergedOptions.body) {
             if (mergedOptions.body.hasOwnProperty(key)) {
-                 params.append(key, mergedOptions.body[key]);
+                params.append(key, mergedOptions.body[key]);
             }
         }
         mergedOptions.body = params.toString();
+        mergedOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    } else if (!mergedOptions.body && mergedOptions.method.toUpperCase() === 'POST') {
+        // For POST requests with no explicit body (like logout, check_session),
+        // ensure Content-Type is set for URLSearchParams.
+        mergedOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    }
+    // Note: if mergedOptions.body is already a string (e.g. URLSearchParams) and Content-Type is not set,
+    // it will default to 'text/plain' or similar by fetch.
+    // Explicitly setting for 'x-www-form-urlencoded' if it's the intended format for string bodies:
+    else if (typeof mergedOptions.body === 'string' && mergedOptions.headers['Content-Type'] === undefined) {
         mergedOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded';
     }
 
@@ -53,50 +60,50 @@ async function fetchAPI(action, options = {}) {
     // Append action to FormData or URL string
     let requestUrl = API_BASE_URL;
     if (mergedOptions.method.toUpperCase() === 'GET') {
-        const params = new URLSearchParams(mergedOptions.body || {}); // Gunakan body untuk parameter GET jika ada
+        const params = new URLSearchParams(mergedOptions.body || {}); // Use body for GET parameters if any
         params.append('action', action);
         requestUrl = `${API_BASE_URL}?${params.toString()}`;
-        delete mergedOptions.body; // Tidak ada body untuk GET
+        delete mergedOptions.body; // No body for GET
     } else if (mergedOptions.body instanceof FormData) {
         mergedOptions.body.append('action', action);
-    } else if (typeof mergedOptions.body === 'string') { // URLSearchParams
+    } else if (typeof mergedOptions.body === 'string') { // Handles URLSearchParams string
         const params = new URLSearchParams(mergedOptions.body);
+        params.append('action', action);
+        mergedOptions.body = params.toString();
+    } else if (!mergedOptions.body && mergedOptions.method.toUpperCase() === 'POST') {
+        // Handle POST requests with no initial body (e.g. logout, check_session)
+        const params = new URLSearchParams();
         params.append('action', action);
         mergedOptions.body = params.toString();
     }
     // Jika body adalah objek JSON (tidak digunakan saat ini oleh backend)
     // else if (typeof mergedOptions.body === 'object' && mergedOptions.headers['Content-Type'] === 'application/json') {
-    //     mergedOptions.body.action = action;
+    //     mergedOptions.body.action = action; // Assuming action is part of the JSON payload
     //     mergedOptions.body = JSON.stringify(mergedOptions.body);
     // }
-
 
     try {
         const response = await fetch(requestUrl, mergedOptions);
         
-        // Coba parse JSON terlepas dari status response.ok untuk mendapatkan pesan error dari backend
         let data;
         try {
             data = await response.json();
         } catch (jsonError) {
-            // Jika parsing JSON gagal, dan response tidak ok, buat objek error standar
             if (!response.ok) {
                 console.error(`HTTP error! Status: ${response.status}. Respons bukan JSON valid.`, await response.text().catch(() => ""));
                 return { status: 'error', message: `Kesalahan server (Status: ${response.status}). Respons tidak valid.` };
             }
-            // Jika response ok tapi JSON tidak valid (seharusnya tidak terjadi dengan backend yang benar)
             console.error('Respons JSON tidak valid meskipun status OK:', jsonError);
             return { status: 'error', message: 'Respons server tidak valid (format JSON salah).' };
         }
 
         if (!response.ok) {
             console.error(`HTTP error! Status: ${response.status}`, data);
-            // Gunakan pesan dari backend jika ada, jika tidak, buat pesan generik
             const message = data?.message || `Kesalahan server (Status: ${response.status}). Silakan coba lagi.`;
-            return { status: 'error', message: message, errors: data?.errors, action: data?.action }; // Sertakan detail errors jika ada
+            return { status: 'error', message: message, errors: data?.errors, action: data?.action };
         }
         
-        return data; // data sudah merupakan objek JSON
+        return data;
     } catch (error) {
         console.error('Fetch API Error:', error.name, error.message);
         let errorMessage = 'Terjadi masalah jaringan. Periksa koneksi Anda dan coba lagi.';
@@ -110,19 +117,19 @@ async function fetchAPI(action, options = {}) {
 const Api = {
     register: (formData) => fetchAPI('register', { body: formData }),
     login: (formData) => fetchAPI('login', { body: formData }),
-    logout: () => fetchAPI('logout', { method: 'POST', body: 'action=logout' }), // Pastikan method POST
-    checkSession: () => fetchAPI('check_session', { method: 'POST', body: 'action=check_session' }),
+    logout: () => fetchAPI('logout', { method: 'POST' }), // Simplified
+    checkSession: () => fetchAPI('check_session', { method: 'POST' }), // Simplified
     
     updateUserProfile: (formData) => fetchAPI('update_profile', { body: formData }),
     changePassword: (formData) => fetchAPI('change_password', { body: formData }),
-    forgotPassword: (email) => fetchAPI('forgot_password', { body: { email: email } }), // Mengirim email sebagai objek
-    // resetPassword: (formData) => fetchAPI('reset_password', { body: formData }), // Untuk submit password baru setelah reset
+    forgotPassword: (email) => fetchAPI('forgot_password', { body: { email: email } }),
+    // resetPassword: (formData) => fetchAPI('reset_password', { body: formData }),
 
     saveFullProfileData: (profileDataPayload) => {
         const formData = new FormData();
         for (const key in profileDataPayload) {
             if (profileDataPayload.hasOwnProperty(key) && profileDataPayload[key] !== undefined) {
-                 if (key === 'avatar' && profileDataPayload[key] instanceof File) {
+                if (key === 'avatar' && profileDataPayload[key] instanceof File) {
                     formData.append(key, profileDataPayload[key], profileDataPayload[key].name);
                 } else {
                     formData.append(key, profileDataPayload[key]);
@@ -134,10 +141,10 @@ const Api = {
 
     getProfileData: () => fetchAPI('get_profile_data', { method: 'GET' }),
 
-    getCompanyList: (filters = {}) => { // filters bisa berupa objek { category: 'Teknologi' }
+    getCompanyList: (filters = {}) => {
         return fetchAPI('get_company_list', { 
             method: 'GET',
-            body: filters // fetchAPI akan mengubah ini menjadi query string
+            body: filters
         });
     },
     getCompanyDetails: (companyId) => {
@@ -147,7 +154,6 @@ const Api = {
         });
     },
 
-    // Placeholder untuk API deaktivasi akun
     deactivateAccount: (password) => fetchAPI('deactivate_account', { body: { current_password: password } })
 };
 

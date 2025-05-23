@@ -4,21 +4,19 @@ const PageSettings = {
     // DOM Elements
     profileSettingsForm: null,
     changePasswordForm: null,
-    settingsPageMessageDiv: null, // Pesan umum untuk halaman settings
+    settingsPageMessageDiv: null,
     
-    // Profile Form Elements
     firstNameInput: null,
     lastNameInput: null,
-    emailInput: null, // Readonly
-    nimInput: null,   // Readonly, Baru ditambahkan di HTML settings
-    semesterSelect: null, // Baru ditambahkan di HTML settings
+    emailInput: null,
+    nimInput: null,
+    semesterSelect: null,
     bioInput: null,
     avatarUploadInput: null,
     avatarPreview: null,
     profileUpdateMessageDiv: null,
     profileSubmitBtn: null,
 
-    // Password Form Elements
     currentPasswordInput: null,
     newPasswordInput: null,
     confirmNewPasswordInput: null,
@@ -26,8 +24,7 @@ const PageSettings = {
     passwordChangeMessageDiv: null,
     passwordSubmitBtn: null,
 
-    // Other Settings Elements
-    darkModeToggleSettings: null, // Toggle tema di halaman settings
+    darkModeToggleSettings: null,
     deactivateAccountBtn: null,
     deactivationMessageDiv: null,
 
@@ -39,7 +36,6 @@ const PageSettings = {
 
         PageSettings.settingsPageMessageDiv = UI.getElement('#settingsPageMessage');
 
-        // Profile form elements
         PageSettings.profileSettingsForm = UI.getElement('#profileSettingsForm');
         if (PageSettings.profileSettingsForm) {
             PageSettings.firstNameInput = UI.getElement('#settings_firstName');
@@ -53,12 +49,13 @@ const PageSettings = {
             PageSettings.profileUpdateMessageDiv = UI.getElement('#profileUpdateMessage');
             PageSettings.profileSubmitBtn = PageSettings.profileSettingsForm.querySelector('button[type="submit"]');
             PageSettings.profileSettingsForm.addEventListener('submit', PageSettings.handleProfileUpdateSubmit);
-            if(PageSettings.avatarUploadInput) {
-                PageSettings.avatarUploadInput.addEventListener('change', PageSettings.handleAvatarPreview);
+            if (PageSettings.avatarUploadInput && PageSettings.avatarPreview && PageSettings.profileUpdateMessageDiv) {
+                PageSettings.avatarUploadInput.addEventListener('change', (event) => {
+                    UI.handleAvatarPreview(event, PageSettings.avatarPreview, PageSettings.profileUpdateMessageDiv);
+                });
             }
         }
 
-        // Password form elements
         PageSettings.changePasswordForm = UI.getElement('#changePasswordForm');
         if (PageSettings.changePasswordForm) {
             PageSettings.currentPasswordInput = UI.getElement('#currentPassword');
@@ -68,23 +65,20 @@ const PageSettings = {
             PageSettings.passwordChangeMessageDiv = UI.getElement('#passwordChangeMessage');
             PageSettings.passwordSubmitBtn = PageSettings.changePasswordForm.querySelector('button[type="submit"]');
             PageSettings.changePasswordForm.addEventListener('submit', PageSettings.handleChangePasswordSubmit);
-            // Listener untuk password strength indicator (jika belum global)
-            if (PageSettings.newPasswordInput && PageSettings.newPasswordStrengthIndicator) {
+            if (PageSettings.newPasswordInput && PageSettings.newPasswordStrengthIndicator && typeof AppCore !== 'undefined') {
                 PageSettings.newPasswordInput.addEventListener('input', function() {
                     AppCore.updatePasswordStrengthIndicator(this, PageSettings.newPasswordStrengthIndicator);
                 });
             }
         }
         
-        // Dark mode toggle (sinkronisasi dengan AppCore)
         PageSettings.darkModeToggleSettings = UI.getElement('#darkModeToggleSettings');
-        if (PageSettings.darkModeToggleSettings && AppCore) {
+        if (PageSettings.darkModeToggleSettings && typeof AppCore !== 'undefined') {
             PageSettings.darkModeToggleSettings.checked = document.body.classList.contains('dark-theme');
             PageSettings.darkModeToggleSettings.removeEventListener('change', PageSettings._handleThemeToggle);
             PageSettings.darkModeToggleSettings.addEventListener('change', PageSettings._handleThemeToggle);
         }
         
-        // Deactivate account
         PageSettings.deactivateAccountBtn = UI.getElement('#deactivateAccountBtn');
         PageSettings.deactivationMessageDiv = UI.getElement('#deactivationMessage');
         if (PageSettings.deactivateAccountBtn) {
@@ -95,8 +89,8 @@ const PageSettings = {
         console.log("PageSettings: Basic initialization complete.");
     },
 
-    _handleThemeToggle: function() { // 'this' akan merujuk ke checkbox
-        if (AppCore && typeof AppCore._applyTheme === 'function') {
+    _handleThemeToggle: function() {
+        if (typeof AppCore !== 'undefined' && typeof AppCore._applyTheme === 'function') {
             AppCore._applyTheme(this.checked ? 'dark-theme' : 'light-theme', true);
         }
     },
@@ -106,7 +100,7 @@ const PageSettings = {
         if (!PageSettings.isPageInitialized) {
             PageSettings.initialize();
         }
-        // Sembunyikan semua pesan sebelum memuat
+        
         if (PageSettings.profileUpdateMessageDiv) UI.hideMessage(PageSettings.profileUpdateMessageDiv);
         if (PageSettings.passwordChangeMessageDiv) UI.hideMessage(PageSettings.passwordChangeMessageDiv);
         if (PageSettings.settingsPageMessageDiv) UI.hideMessage(PageSettings.settingsPageMessageDiv);
@@ -115,12 +109,9 @@ const PageSettings = {
         if (window.sikmaApp && window.sikmaApp.initialUserData) {
             PageSettings.populateSettingsForm(window.sikmaApp.initialUserData);
         } else {
-            // Jika tidak ada data user (seharusnya tidak terjadi jika user login)
-            // Mungkin perlu mengambil data dari API atau menampilkan pesan error
             console.warn("PageSettings: No initial user data found to populate form.");
-            UI.showMessage(PageSettings.settingsPageMessageDiv, "Gagal memuat data pengguna.", "error");
+            if (PageSettings.settingsPageMessageDiv) UI.showMessage(PageSettings.settingsPageMessageDiv, "Gagal memuat data pengguna.", "error");
         }
-        // Update status toggle tema
         if (PageSettings.darkModeToggleSettings) {
             PageSettings.darkModeToggleSettings.checked = document.body.classList.contains('dark-theme');
         }
@@ -136,10 +127,9 @@ const PageSettings = {
         if (PageSettings.settingsPageMessageDiv) UI.hideMessage(PageSettings.settingsPageMessageDiv);
         if (PageSettings.deactivationMessageDiv) UI.hideMessage(PageSettings.deactivationMessageDiv);
 
-        if (PageSettings.avatarPreview) {
+        if (PageSettings.avatarPreview && window.sikmaApp?.baseUrl) {
             PageSettings.avatarPreview.src = window.sikmaApp.baseUrl + '/assets/images/default_avatar.png';
         }
-        // PageSettings.isPageInitialized = false; // Jangan di-reset
     },
 
     populateSettingsForm: (userData) => {
@@ -155,37 +145,20 @@ const PageSettings = {
         if (PageSettings.nimInput) PageSettings.nimInput.value = userData.nim || '';
         if (PageSettings.semesterSelect) PageSettings.semesterSelect.value = userData.semester || '';
         if (PageSettings.bioInput) PageSettings.bioInput.value = userData.bio || '';
-        if (PageSettings.avatarPreview) {
-            PageSettings.avatarPreview.src = userData.avatar || (window.sikmaApp.baseUrl + '/assets/images/default_avatar.png');
-            PageSettings.avatarPreview.onerror = () => { PageSettings.avatarPreview.src = window.sikmaApp.baseUrl + '/assets/images/default_avatar.png';};
+        if (PageSettings.avatarPreview && window.sikmaApp?.baseUrl) {
+            const defaultAvatarSrc = window.sikmaApp.baseUrl + '/assets/images/default_avatar.png';
+            PageSettings.avatarPreview.src = userData.avatar || defaultAvatarSrc;
+            PageSettings.avatarPreview.onerror = () => { PageSettings.avatarPreview.src = defaultAvatarSrc; };
         }
     },
 
-    handleAvatarPreview: (event) => {
-        const file = event.target.files[0];
-        if (file && PageSettings.avatarPreview) {
-             if (file.size > 5 * 1024 * 1024) { // Maks 5MB
-                UI.showMessage(PageSettings.profileUpdateMessageDiv, 'Ukuran file avatar terlalu besar (Maks 5MB).', 'error');
-                event.target.value = ""; // Reset file input
-                return;
-            }
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!allowedTypes.includes(file.type)) {
-                UI.showMessage(PageSettings.profileUpdateMessageDiv, 'Format file avatar tidak valid (hanya JPG, PNG, GIF).', 'error');
-                event.target.value = ""; // Reset file input
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                PageSettings.avatarPreview.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-    },
+    // Removed local handleAvatarPreview, now uses UI.handleAvatarPreview
 
     handleProfileUpdateSubmit: async (e) => {
         e.preventDefault();
-        if (PageSettings.profileUpdateMessageDiv) UI.hideMessage(PageSettings.profileUpdateMessageDiv);
+        if (!PageSettings.profileSettingsForm || !PageSettings.profileUpdateMessageDiv || !PageSettings.profileSubmitBtn || !PageSettings.semesterSelect) return;
+
+        UI.hideMessage(PageSettings.profileUpdateMessageDiv);
         
         if (!PageSettings.profileSettingsForm.checkValidity()) {
             PageSettings.profileSettingsForm.reportValidity();
@@ -194,40 +167,36 @@ const PageSettings = {
         }
 
         const formData = new FormData(PageSettings.profileSettingsForm);
-        // Email dan NIM adalah readonly, jadi tidak akan terkirim by default jika disabled.
-        // Backend user_handler.php untuk 'update_profile' tidak mengharapkan perubahan email/NIM.
-        // Namun, kita perlu mengirim semester.
-        formData.append('semester', PageSettings.semesterSelect.value); // Pastikan semester terkirim
+        formData.append('semester', PageSettings.semesterSelect.value);
 
         UI.showButtonSpinner(PageSettings.profileSubmitBtn, 'Simpan Perubahan Profil');
-
         const response = await Api.updateUserProfile(formData);
         UI.hideButtonSpinner(PageSettings.profileSubmitBtn);
 
         if (response.status === 'success' && response.user) {
             UI.showMessage(PageSettings.profileUpdateMessageDiv, response.message || 'Profil berhasil diperbarui!', 'success');
             
-            // Update data pengguna global dan UI bersama
             window.sikmaApp.initialUserData = { ...window.sikmaApp.initialUserData, ...response.user };
             UI.updateSharedUserUI(window.sikmaApp.initialUserData);
             
-            // Update juga data di halaman profil jika sudah diinisialisasi
             if (typeof PageProfile !== 'undefined' && PageProfile.isPageInitialized) {
-                PageProfile._populateFullProfileForm(window.sikmaApp.initialUserData); // Panggil fungsi populate di PageProfile
+                PageProfile._populateFullProfileForm(window.sikmaApp.initialUserData);
             }
-            // Cek ulang kelengkapan profil
             window.sikmaApp.needsProfileCompletion = !response.user.is_profile_complete;
-            AuthFlow.checkInitialProfileCompletion();
+            if (typeof AuthFlow !== 'undefined') AuthFlow.checkInitialProfileCompletion();
 
         } else {
-            const errorMsg = response.errors ? response.errors : (response.message || 'Gagal memperbarui profil.');
+            const errorMsg = response.errors ? UI.formatErrors(response.errors) : (response.message || 'Gagal memperbarui profil.');
             UI.showMessage(PageSettings.profileUpdateMessageDiv, errorMsg, 'error');
         }
     },
 
     handleChangePasswordSubmit: async (e) => {
         e.preventDefault();
-        if (PageSettings.passwordChangeMessageDiv) UI.hideMessage(PageSettings.passwordChangeMessageDiv);
+        if (!PageSettings.changePasswordForm || !PageSettings.passwordChangeMessageDiv || 
+            !PageSettings.newPasswordInput || !PageSettings.confirmNewPasswordInput || !PageSettings.passwordSubmitBtn) return;
+
+        UI.hideMessage(PageSettings.passwordChangeMessageDiv);
 
         if (!PageSettings.changePasswordForm.checkValidity()) {
             PageSettings.changePasswordForm.reportValidity();
@@ -242,25 +211,26 @@ const PageSettings = {
 
         const formData = new FormData(PageSettings.changePasswordForm);
         UI.showButtonSpinner(PageSettings.passwordSubmitBtn, 'Ubah Kata Sandi');
-
         const response = await Api.changePassword(formData);
         UI.hideButtonSpinner(PageSettings.passwordSubmitBtn);
 
         if (response.status === 'success') {
             UI.showMessage(PageSettings.passwordChangeMessageDiv, response.message || 'Kata sandi berhasil diubah.', 'success');
             UI.resetForm(PageSettings.changePasswordForm);
-            if (PageSettings.newPasswordStrengthIndicator) PageSettings.newPasswordStrengthIndicator.textContent = ''; // Reset strength
+            if (PageSettings.newPasswordStrengthIndicator) PageSettings.newPasswordStrengthIndicator.textContent = '';
         } else {
-            const errorMsg = response.errors ? response.errors : (response.message || 'Gagal mengubah kata sandi.');
+            const errorMsg = response.errors ? UI.formatErrors(response.errors) : (response.message || 'Gagal mengubah kata sandi.');
             UI.showMessage(PageSettings.passwordChangeMessageDiv, errorMsg, 'error');
         }
     },
     
     handleDeactivateAccount: async () => {
-        if (PageSettings.deactivationMessageDiv) UI.hideMessage(PageSettings.deactivationMessageDiv);
+        if (!PageSettings.deactivationMessageDiv || !PageSettings.settingsPageMessageDiv || !PageSettings.deactivateAccountBtn) return;
+        
+        UI.hideMessage(PageSettings.deactivationMessageDiv);
         
         const password = prompt("Untuk keamanan, masukkan kata sandi Anda saat ini untuk menonaktifkan akun:");
-        if (password === null) return; // User cancel prompt
+        if (password === null) return;
 
         if (!password) {
             UI.showMessage(PageSettings.deactivationMessageDiv, 'Kata sandi diperlukan untuk menonaktifkan akun.', 'warning');
@@ -273,15 +243,13 @@ const PageSettings = {
         
         UI.showButtonSpinner(PageSettings.deactivateAccountBtn, 'Nonaktifkan Akun Saya', 'Memproses...');
         
-        // Panggil API untuk deaktivasi (placeholder, backend perlu implementasi)
         const response = await Api.deactivateAccount(password); 
         UI.hideButtonSpinner(PageSettings.deactivateAccountBtn);
 
         if (response.status === 'success') {
             UI.showMessage(PageSettings.settingsPageMessageDiv, response.message || 'Akun Anda telah dinonaktifkan. Anda akan segera logout.', 'success', 0);
-            // Lakukan logout otomatis setelah beberapa detik
             setTimeout(() => {
-                if (AuthFlow && typeof AuthFlow.handleLogout === 'function') {
+                if (typeof AuthFlow !== 'undefined' && typeof AuthFlow.handleLogout === 'function') {
                     AuthFlow.handleLogout();
                 }
             }, 4000);
@@ -291,6 +259,8 @@ const PageSettings = {
     }
 };
 
-// Panggil initialize dasar saat script dimuat jika elemen sudah ada
-// document.addEventListener('DOMContentLoaded', PageSettings.initialize);
-// Inisialisasi akan dipanggil oleh AppCore.navigateToPage
+document.addEventListener('DOMContentLoaded', () => {
+    if (UI.getElement('#page-settings')) { // Ensure this runs only if page-settings exists
+        PageSettings.initialize();
+    }
+});

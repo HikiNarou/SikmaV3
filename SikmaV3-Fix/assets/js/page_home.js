@@ -14,15 +14,11 @@ const PageHome = {
 
     // State
     recommendationSwiperInstance: null,
-    allCompanyData: [], // Menyimpan semua data perusahaan yang diambil dari API
-    isPageInitialized: false, // Flag untuk menandai apakah inisialisasi dasar sudah dilakukan
+    allCompanyData: [],
+    isPageInitialized: false,
 
     initialize: () => {
-        // Inisialisasi dasar yang hanya perlu dilakukan sekali saat script dimuat
-        // atau saat elemen DOM pertama kali tersedia.
-        // Pengambilan data dan rendering akan di-handle oleh loadPageData().
         if (PageHome.isPageInitialized) return;
-
         console.log("PageHome: Initializing (caching static elements & base listeners)...");
 
         PageHome.recommendationSwiperWrapper = UI.getElement('#recommendationSwiperWrapper');
@@ -36,32 +32,25 @@ const PageHome = {
         PageHome.companyListLoading = UI.getElement('#companyListLoading');
 
         PageHome._initCategoryFilter();
-        PageHome._initCompanyCardLinks(); // Untuk kartu yang mungkin sudah ada di HTML atau ditambahkan dinamis
+        PageHome._initCompanyCardLinks();
 
         PageHome.isPageInitialized = true;
         console.log("PageHome: Basic initialization complete.");
     },
 
     loadPageData: async () => {
-        // Fungsi ini akan dipanggil oleh AppCore.navigateToPage setiap kali halaman Home aktif
         console.log("PageHome: Loading page data...");
         if (!PageHome.isPageInitialized) {
-            PageHome.initialize(); // Pastikan elemen dasar di-cache
+            PageHome.initialize();
         }
 
-        PageHome.resetPageVisuals(); // Bersihkan tampilan sebelum memuat data baru
-
-        // Muat data rekomendasi (bisa dari endpoint berbeda atau subset dari company list)
-        // Untuk sekarang, kita akan gunakan sebagian dari company list sebagai rekomendasi
-        await PageHome._loadAndDisplayCompanies(); // Ini juga akan mengisi PageHome.allCompanyData
-
-        // Setelah allCompanyData terisi, populate swiper
+        PageHome.resetPageVisuals();
+        await PageHome._loadAndDisplayCompanies();
         PageHome._populateRecommendationSwiper();
-        PageHome._initSwiper(); // Inisialisasi atau update Swiper setelah konten ada
+        PageHome._initSwiper();
     },
 
     resetPageVisuals: () => {
-        // Fungsi ini membersihkan konten dinamis tanpa menghancurkan listener dasar
         console.log("PageHome: Resetting page visuals...");
         if (PageHome.recommendationSwiperInstance && typeof PageHome.recommendationSwiperInstance.destroy === 'function') {
             try {
@@ -72,7 +61,6 @@ const PageHome = {
         if (PageHome.recommendationSwiperWrapper) PageHome.recommendationSwiperWrapper.innerHTML = '';
         if (PageHome.companyGrid) PageHome.companyGrid.innerHTML = '';
         
-        // Reset filter dan pesan
         if (PageHome.companyCategoryFilter) PageHome.companyCategoryFilter.value = '';
         if (PageHome.activeFilterDisplay) UI.hideElement(PageHome.activeFilterDisplay);
         if (PageHome.noRecommendationsMessage) UI.hideElement(PageHome.noRecommendationsMessage);
@@ -81,17 +69,14 @@ const PageHome = {
     },
     
     resetPage: () => {
-        // Fungsi reset penuh, mungkin dipanggil saat logout
         PageHome.resetPageVisuals();
         PageHome.allCompanyData = [];
-        // Listener dasar di #companyCategoryFilter dan #companyGrid tidak perlu dihapus jika elemennya tetap
-        // PageHome.isPageInitialized = false; // Jangan di-reset agar initialize() tidak dipanggil berulang
         console.log("PageHome: Full page reset.");
     },
 
     _initSwiper: () => {
         if (PageHome.recommendationSwiperContainer && PageHome.recommendationSwiperWrapper && PageHome.recommendationSwiperWrapper.children.length > 0 && typeof Swiper !== 'undefined') {
-            if (PageHome.recommendationSwiperInstance) { // Hancurkan instance lama jika ada
+            if (PageHome.recommendationSwiperInstance) {
                 try {
                     PageHome.recommendationSwiperInstance.destroy(true, true);
                 } catch(e) { console.warn("Swiper destroy error on re-init:", e); }
@@ -101,7 +86,7 @@ const PageHome = {
                 slidesPerView: 1.2,
                 spaceBetween: 15,
                 centeredSlides: false,
-                loop: PageHome.recommendationSwiperWrapper.children.length > 3, // Loop jika slide cukup banyak
+                loop: PageHome.recommendationSwiperWrapper.children.length > 3,
                 autoplay: {
                     delay: 4500,
                     disableOnInteraction: false,
@@ -121,32 +106,29 @@ const PageHome = {
                     1200: { slidesPerView: 3.2, spaceBetween: 25 }
                 }
             });
-            PageHome._initSwiperCardLinks(); // Pastikan link di slide baru berfungsi
+            PageHome._initSwiperCardLinks();
         } else if (typeof Swiper === 'undefined') {
             console.warn("Swiper library is not loaded.");
         } else if (PageHome.recommendationSwiperWrapper && PageHome.recommendationSwiperWrapper.children.length === 0) {
             console.log("PageHome: No slides to initialize Swiper.");
-            if(PageHome.noRecommendationsMessage) UI.showElement(PageHome.noRecommendationsMessage, 'block');
+            if (PageHome.noRecommendationsMessage) UI.showElement(PageHome.noRecommendationsMessage, 'block');
         }
     },
     
     _populateRecommendationSwiper: () => {
         if (!PageHome.recommendationSwiperWrapper) return;
-        PageHome.recommendationSwiperWrapper.innerHTML = ''; // Clear existing slides
+        PageHome.recommendationSwiperWrapper.innerHTML = '';
 
-        // Ambil beberapa perusahaan dari allCompanyData untuk rekomendasi (misal 5 pertama)
-        // Atau idealnya, ini dari endpoint API khusus rekomendasi
         const recommendedCompanies = PageHome.allCompanyData.slice(0, 5); 
 
         if (recommendedCompanies.length === 0) {
-            if(PageHome.noRecommendationsMessage) UI.showElement(PageHome.noRecommendationsMessage, 'block');
+            if (PageHome.noRecommendationsMessage) UI.showElement(PageHome.noRecommendationsMessage, 'block');
             return;
         }
-        if(PageHome.noRecommendationsMessage) UI.hideElement(PageHome.noRecommendationsMessage);
+        if (PageHome.noRecommendationsMessage) UI.hideElement(PageHome.noRecommendationsMessage);
 
         recommendedCompanies.forEach(company => {
-            // Placeholder untuk skor dan alasan, karena backend belum menyediakan
-            const matchScore = Math.floor(Math.random() * (95 - 70 + 1)) + 70 + "%"; // Random 70-95%
+            const matchScore = Math.floor(Math.random() * (95 - 70 + 1)) + 70 + "%";
             const reasons = ["Cocok dengan keahlian Anda.", "Sesuai preferensi industri.", "Populer di kalangan mahasiswa.", "Lokasi strategis."];
             const matchReason = reasons[Math.floor(Math.random() * reasons.length)];
 
@@ -174,7 +156,6 @@ const PageHome = {
 
     _initSwiperCardLinks: () => {
         if (PageHome.recommendationSwiperWrapper) {
-            // Gunakan event delegation karena slide bisa dinamis
             PageHome.recommendationSwiperWrapper.addEventListener('click', (event) => {
                 const cardLink = event.target.closest('.recommendation-card[data-companyid], .btn-detail[data-companyid]');
                 if (cardLink) {
@@ -188,36 +169,36 @@ const PageHome = {
 
     _initCategoryFilter: () => {
         if (PageHome.companyCategoryFilter) {
-            PageHome.companyCategoryFilter.removeEventListener('change', PageHome._handleCategoryFilterChange); // Hapus listener lama
+            PageHome.companyCategoryFilter.removeEventListener('change', PageHome._handleCategoryFilterChange);
             PageHome.companyCategoryFilter.addEventListener('change', PageHome._handleCategoryFilterChange);
         }
     },
-    _handleCategoryFilterChange: function() { // 'this' akan merujuk ke select element
+
+    _handleCategoryFilterChange: function() {
         const selectedCategory = this.value;
-        PageHome.filterCompanyGrid(selectedCategory);
-        // Jika ada search term aktif, terapkan juga search filter
-        const mainSearchInput = UI.getElement('#mainSearchInput');
-        if (mainSearchInput && mainSearchInput.value.trim() !== '') {
-            PageHome.filterCompaniesBySearch(mainSearchInput.value.trim());
-        }
+        PageHome._applyFiltersAndSearch(selectedCategory, UI.getElement('#mainSearchInput')?.value.trim() || "");
+    },
+    
+    filterCompaniesBySearch: (searchTerm) => { // Called by AppCore global search
+        const currentCategoryFilter = PageHome.companyCategoryFilter ? PageHome.companyCategoryFilter.value : "";
+        PageHome._applyFiltersAndSearch(currentCategoryFilter, searchTerm);
     },
 
-    filterCompanyGrid: (selectedCategory) => {
+    _applyFiltersAndSearch: (category, searchTerm) => {
         if (!PageHome.companyGrid) return;
-        const companyCards = PageHome.companyGrid.querySelectorAll('.card.card-hover-effect');
+        
+        const currentCategory = category.toLowerCase();
+        const currentSearchTerm = searchTerm.toLowerCase().trim();
         let visibleCount = 0;
-        selectedCategory = selectedCategory.toLowerCase();
-
+        
+        const companyCards = PageHome.companyGrid.querySelectorAll('.card.card-hover-effect');
         companyCards.forEach(card => {
             const cardCategory = card.dataset.category ? card.dataset.category.toLowerCase() : "";
-            // Cek juga dengan search term yang mungkin aktif
-            const mainSearchInput = UI.getElement('#mainSearchInput');
-            const searchTerm = mainSearchInput ? mainSearchInput.value.trim().toLowerCase() : "";
             const cardTitle = card.querySelector('.card-title')?.textContent.toLowerCase() || "";
-            const cardDescription = card.querySelector('.card-creator')?.textContent.toLowerCase() || "";
+            const cardDescription = card.querySelector('.card-creator')?.textContent.toLowerCase() || ""; // Assuming description is in .card-creator
             
-            const matchesCategory = (selectedCategory === "" || cardCategory === selectedCategory);
-            const matchesSearch = (searchTerm === "" || cardTitle.includes(searchTerm) || cardDescription.includes(searchTerm));
+            const matchesCategory = (currentCategory === "" || cardCategory === currentCategory);
+            const matchesSearch = (currentSearchTerm === "" || cardTitle.includes(currentSearchTerm) || cardDescription.includes(currentSearchTerm));
 
             if (matchesCategory && matchesSearch) {
                 UI.removeClass(card, 'hidden-by-filter');
@@ -226,39 +207,16 @@ const PageHome = {
                 UI.addClass(card, 'hidden-by-filter');
             }
         });
-        PageHome._updateFilterDisplayAndNoResults(selectedCategory, UI.getElement('#mainSearchInput')?.value.trim() || "", visibleCount);
-    },
-    
-    filterCompaniesBySearch: (searchTerm) => {
-        if (!PageHome.companyGrid) return;
-        searchTerm = searchTerm.toLowerCase().trim();
-        const currentCategoryFilter = PageHome.companyCategoryFilter ? PageHome.companyCategoryFilter.value.toLowerCase() : "";
-        let visibleCount = 0;
-        
-        const companyCards = PageHome.companyGrid.querySelectorAll('.card.card-hover-effect');
-        companyCards.forEach(card => {
-            const cardTitle = card.querySelector('.card-title')?.textContent.toLowerCase() || "";
-            const cardDescription = card.querySelector('.card-creator')?.textContent.toLowerCase() || "";
-            const cardCategory = card.dataset.category ? card.dataset.category.toLowerCase() : "";
-            
-            const matchesSearch = (searchTerm === "" || cardTitle.includes(searchTerm) || cardDescription.includes(searchTerm));
-            const matchesCategory = (currentCategoryFilter === "" || cardCategory === currentCategoryFilter);
-
-            if (matchesSearch && matchesCategory) {
-                UI.removeClass(card, 'hidden-by-filter');
-                visibleCount++;
-            } else {
-                UI.addClass(card, 'hidden-by-filter');
-            }
-        });
-        PageHome._updateFilterDisplayAndNoResults(currentCategoryFilter, searchTerm, visibleCount);
+        PageHome._updateFilterDisplayAndNoResults(currentCategory, currentSearchTerm, visibleCount);
     },
 
     _updateFilterDisplayAndNoResults: (category, searchTerm, visibleCount) => {
+        if (!PageHome.activeFilterDisplay || !PageHome.noCompanyResultsMessage) return;
+
         let filterTextParts = [];
         if (category !== "" && PageHome.companyCategoryFilter) {
             const selectedOptionText = PageHome.companyCategoryFilter.options[PageHome.companyCategoryFilter.selectedIndex].text;
-            if (selectedOptionText !== "Semua Kategori") { // Jangan tampilkan jika "Semua Kategori"
+            if (selectedOptionText !== "Semua Kategori") {
                  filterTextParts.push(`Kategori: ${selectedOptionText}`);
             }
         }
@@ -274,16 +232,16 @@ const PageHome = {
         }
 
         if (visibleCount === 0 && (category !== "" || searchTerm !== "")) {
-            if(PageHome.noCompanyResultsMessage) UI.showElement(PageHome.noCompanyResultsMessage, 'block');
+            UI.showElement(PageHome.noCompanyResultsMessage, 'block');
         } else {
-            if(PageHome.noCompanyResultsMessage) UI.hideElement(PageHome.noCompanyResultsMessage);
+            UI.hideElement(PageHome.noCompanyResultsMessage);
         }
     },
 
     _initCompanyCardLinks: () => {
         if (PageHome.companyGrid) {
             PageHome.companyGrid.addEventListener('click', (event) => {
-                const cardLink = event.target.closest('.company-detail-link'); // Target bisa tombol atau link <a>
+                const cardLink = event.target.closest('.company-detail-link');
                 if (cardLink) {
                     event.preventDefault();
                     const companyId = cardLink.dataset.companyid;
@@ -296,12 +254,11 @@ const PageHome = {
     _navigateToCompanyDetail: (companyId) => {
         if (companyId && typeof PageCompanyDetail !== 'undefined' && typeof PageCompanyDetail.displayCompanyDetails === 'function') {
             PageCompanyDetail.displayCompanyDetails(companyId);
-        } else if (companyId) { // Fallback jika PageCompanyDetail belum siap
+        } else if (companyId) { // Fallback if PageCompanyDetail might not be fully ready (less likely with current AppCore flow)
+            console.warn("PageCompanyDetail.displayCompanyDetails not available, attempting navigation via AppCore.");
             AppCore.navigateToPage('page-company-detail', null, 'Detail Perusahaan');
-            // Mungkin perlu cara untuk mengirim companyId ke PageCompanyDetail jika tidak langsung dipanggil
-            // Ini bisa dilakukan dengan menyimpan ID di state global atau parameter URL (jika routing diimplementasikan)
-            // Untuk saat ini, asumsikan PageCompanyDetail akan mengambil ID dari state atau parameter
-            if(window.fetchAndDisplayCompanyDetails) window.fetchAndDisplayCompanyDetails(companyId);
+            // Consider a way to pass companyId if AppCore.navigateToPage doesn't handle parameters for this.
+            // For now, this relies on PageCompanyDetail being able to pick up an ID if it's set elsewhere (e.g. URL hash manually).
         }
     },
 
@@ -310,26 +267,31 @@ const PageHome = {
 
         UI.showElement(PageHome.companyListLoading, 'block');
         UI.hideElement(PageHome.noCompanyResultsMessage);
-        PageHome.companyGrid.innerHTML = ''; // Kosongkan grid sebelum memuat
+        PageHome.companyGrid.innerHTML = '';
 
-        const response = await Api.getCompanyList(); // API baru untuk daftar perusahaan
+        const response = await Api.getCompanyList();
 
         UI.hideElement(PageHome.companyListLoading);
 
         if (response.status === 'success' && response.companies && response.companies.length > 0) {
-            PageHome.allCompanyData = response.companies; // Simpan data asli
+            PageHome.allCompanyData = response.companies;
             response.companies.forEach(company => PageHome.addCompanyToGrid(company));
         } else if (response.status === 'success' && (!response.companies || response.companies.length === 0)) {
             PageHome.allCompanyData = [];
-            UI.showElement(PageHome.noCompanyResultsMessage, 'block');
-            PageHome.noCompanyResultsMessage.innerHTML = `<p><i class="fas fa-info-circle"></i> Belum ada data perusahaan yang tersedia saat ini.</p>`;
+            if (PageHome.noCompanyResultsMessage) {
+                UI.showElement(PageHome.noCompanyResultsMessage, 'block');
+                PageHome.noCompanyResultsMessage.innerHTML = `<p><i class="fas fa-info-circle"></i> Belum ada data perusahaan yang tersedia saat ini.</p>`;
+            }
         } else {
             PageHome.allCompanyData = [];
-            UI.showElement(PageHome.noCompanyResultsMessage, 'block');
-            PageHome.noCompanyResultsMessage.innerHTML = `<p><i class="fas fa-exclamation-triangle"></i> ${UI.escapeHTML(response.message || 'Gagal memuat daftar perusahaan.')}</p>`;
+            if (PageHome.noCompanyResultsMessage) {
+                UI.showElement(PageHome.noCompanyResultsMessage, 'block');
+                PageHome.noCompanyResultsMessage.innerHTML = `<p><i class="fas fa-exclamation-triangle"></i> ${UI.escapeHTML(response.message || 'Gagal memuat daftar perusahaan.')}</p>`;
+            }
         }
-        // Setelah data dimuat, reset filter display
-        PageHome._updateFilterDisplayAndNoResults(PageHome.companyCategoryFilter?.value || "", UI.getElement('#mainSearchInput')?.value.trim() || "", PageHome.allCompanyData.length);
+        const currentCategory = PageHome.companyCategoryFilter?.value || "";
+        const currentSearchTerm = UI.getElement('#mainSearchInput')?.value.trim() || "";
+        PageHome._applyFiltersAndSearch(currentCategory, currentSearchTerm); // Apply initial/empty filters
     },
 
     addCompanyToGrid: (companyData) => {
@@ -338,20 +300,20 @@ const PageHome = {
         const card = document.createElement('div');
         card.className = `card card-hover-effect company-card-${companyData.id}`;
         card.dataset.companyId = companyData.id;
-        card.dataset.category = companyData.category || 'Lainnya'; // Pastikan ada category
+        card.dataset.category = companyData.category || 'Lainnya';
 
         const name = UI.escapeHTML(companyData.name);
         const categoryDisplay = UI.escapeHTML(companyData.category || 'Lainnya');
         const typeDisplay = UI.escapeHTML(companyData.type || 'N/A');
-        const description = UI.escapeHTML(companyData.description || 'Deskripsi tidak tersedia.');
-        const imageUrl = UI.escapeHTML(companyData.imageUrl || companyData.logo_url || 'https://placehold.co/325x200/ccc/999?text=No+Image');
+        const description = UI.escapeHTML(companyData.description_short || companyData.description || 'Deskripsi tidak tersedia.'); // Prioritize short description
+        const imageUrl = UI.escapeHTML(companyData.logo_url || 'https://placehold.co/325x200/ccc/999?text=No+Image'); // Use logo_url for grid
         const tagClass = `tag-${categoryDisplay.toLowerCase().replace(/[^a-z0-9]/gi, '-').replace(/&/g, 'and')}`;
 
-
         card.innerHTML = `
-            <div class="card-img"></div> <a href="#page-company-detail?id=${companyData.id}" class="card-link company-detail-link" data-companyid="${companyData.id}" aria-label="Lihat detail untuk ${name}">
+            <div class="card-img"></div> 
+            <a href="#page-company-detail?id=${companyData.id}" class="card-link company-detail-link" data-companyid="${companyData.id}" aria-label="Lihat detail untuk ${name}">
                 <div class="card-img-hovered" style="background-image: var(--card-img-hovered-overlay), url('${imageUrl}');">
-                    <span class="visually-hidden">Gambar ${name}</span>
+                    <span class="visually-hidden">Logo ${name}</span>
                 </div>
             </a>
             <div class="card-info">
@@ -359,14 +321,19 @@ const PageHome = {
                     <span class="card-tag ${tagClass}">${categoryDisplay}</span>
                     <div class="card-time">${typeDisplay}</div>
                 </div>
-                <h3 class="card-title">${name}</h3> <div class="card-creator">${description}</div>
-                <button class="btn btn-sm btn-primary btn-detail explore-btn-detail company-detail-link" data-companyid="${companyData.id}"><i class="fas fa-arrow-right"></i> Lihat Detail</button>
+                <h3 class="card-title">${name}</h3> 
+                <div class="card-creator">${description}</div>
+                <button class="btn btn-sm btn-primary btn-detail explore-btn-detail company-detail-link" data-companyid="${companyData.id}">
+                    <i class="fas fa-arrow-right"></i> Lihat Detail
+                </button>
             </div>
         `;
         PageHome.companyGrid.appendChild(card);
     }
 };
 
-// Panggil initialize dasar saat script dimuat jika elemen sudah ada
-// document.addEventListener('DOMContentLoaded', PageHome.initialize);
-// Inisialisasi akan dipanggil oleh AppCore.navigateToPage
+document.addEventListener('DOMContentLoaded', () => {
+    if (UI.getElement('#page-home')) { // Ensure this runs only if page-home exists
+        PageHome.initialize();
+    }
+});

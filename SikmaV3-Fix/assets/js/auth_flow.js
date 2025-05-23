@@ -35,7 +35,7 @@ const AuthFlow = {
     isInitialized: false,
 
     initializeAuthForms: () => {
-        if (AuthFlow.isInitialized) return; // Prevent re-initialization
+        if (AuthFlow.isInitialized) return;
 
         console.log("AuthFlow: Initializing authentication forms...");
 
@@ -43,31 +43,45 @@ const AuthFlow = {
         AuthFlow.appContainer = UI.getElement('#appContainer');
         AuthFlow.logoutLink = UI.getElement('#nav-logout');
 
-        // Login Form
         AuthFlow.loginForm = UI.getElement('#loginForm');
-        AuthFlow.loginEmailNimInput = UI.getElement('#login_email_nim');
-        AuthFlow.loginPasswordInput = UI.getElement('#login_password');
-        AuthFlow.rememberMeCheckbox = UI.getElement('#remember_me');
-        AuthFlow.forgotPasswordLink = UI.getElement('#forgotPasswordLink');
-        AuthFlow.loginMessageDiv = UI.getElement('#loginMessage');
-        AuthFlow.loginSubmitBtn = AuthFlow.loginForm ? AuthFlow.loginForm.querySelector('button[type="submit"]') : null;
+        if (AuthFlow.loginForm) {
+            AuthFlow.loginEmailNimInput = UI.getElement('#login_email_nim');
+            AuthFlow.loginPasswordInput = UI.getElement('#login_password');
+            AuthFlow.rememberMeCheckbox = UI.getElement('#remember_me');
+            AuthFlow.forgotPasswordLink = UI.getElement('#forgotPasswordLink');
+            AuthFlow.loginMessageDiv = UI.getElement('#loginMessage');
+            AuthFlow.loginSubmitBtn = AuthFlow.loginForm.querySelector('button[type="submit"]');
+            AuthFlow.loginForm.addEventListener('submit', AuthFlow.handleLoginSubmit);
+        }
 
-        // Register Form
         AuthFlow.registerForm = UI.getElement('#registerForm');
-        AuthFlow.registerNamaLengkapInput = UI.getElement('#register_nama_lengkap');
-        AuthFlow.registerEmailInput = UI.getElement('#register_email');
-        AuthFlow.registerNimInput = UI.getElement('#register_nim');
-        AuthFlow.registerSemesterSelect = UI.getElement('#register_semester');
-        AuthFlow.registerPasswordInput = UI.getElement('#register_password');
-        AuthFlow.registerConfirmPasswordInput = UI.getElement('#register_confirm_password');
-        AuthFlow.registerTermsCheckbox = UI.getElement('#register_terms');
-        AuthFlow.registerMessageDiv = UI.getElement('#registerMessage');
-        AuthFlow.registerSubmitBtn = AuthFlow.registerForm ? AuthFlow.registerForm.querySelector('button[type="submit"]') : null;
-
-        // Profile Completion
+        if (AuthFlow.registerForm) {
+            AuthFlow.registerNamaLengkapInput = UI.getElement('#register_nama_lengkap');
+            AuthFlow.registerEmailInput = UI.getElement('#register_email');
+            AuthFlow.registerNimInput = UI.getElement('#register_nim');
+            AuthFlow.registerSemesterSelect = UI.getElement('#register_semester');
+            AuthFlow.registerPasswordInput = UI.getElement('#register_password');
+            AuthFlow.registerConfirmPasswordInput = UI.getElement('#register_confirm_password');
+            AuthFlow.registerTermsCheckbox = UI.getElement('#register_terms');
+            AuthFlow.registerMessageDiv = UI.getElement('#registerMessage');
+            AuthFlow.registerSubmitBtn = AuthFlow.registerForm.querySelector('button[type="submit"]');
+            AuthFlow.registerForm.addEventListener('submit', AuthFlow.handleRegisterSubmit);
+        }
+        
         AuthFlow.profileCompletionOverlay = UI.getElement('#profileCompletionOverlay');
-        AuthFlow.profileCompletionMessageDiv = UI.getElement('#profileCompletionMessage');
-        AuthFlow.goToProfileCompletionBtn = UI.getElement('#goToProfileCompletionBtn');
+        if (AuthFlow.profileCompletionOverlay) {
+            AuthFlow.profileCompletionMessageDiv = UI.getElement('#profileCompletionMessage'); // Typically within the overlay
+            AuthFlow.goToProfileCompletionBtn = UI.getElement('#goToProfileCompletionBtn');
+            if (AuthFlow.goToProfileCompletionBtn) {
+                AuthFlow.goToProfileCompletionBtn.addEventListener('click', () => {
+                    if (AppCore && typeof AppCore.navigateToPage === 'function') {
+                        AppCore.navigateToPage('page-profile', UI.getElement('a[data-page="page-profile"]'), 'Lengkapi Profil');
+                        UI.hideElement(AuthFlow.profileCompletionOverlay);
+                        document.body.style.overflow = '';
+                    }
+                });
+            }
+        }
 
         const switchToRegisterLink = UI.getElement('#switchToRegister');
         const switchToLoginLink = UI.getElement('#switchToLogin');
@@ -84,16 +98,9 @@ const AuthFlow = {
                 AuthFlow.showLoginForm();
             });
         }
-
-        if (AuthFlow.loginForm && AuthFlow.loginSubmitBtn) {
-            AuthFlow.loginForm.addEventListener('submit', AuthFlow.handleLoginSubmit);
-        }
-        if (AuthFlow.registerForm && AuthFlow.registerSubmitBtn) {
-            AuthFlow.registerForm.addEventListener('submit', AuthFlow.handleRegisterSubmit);
-        }
         
         if (AuthFlow.logoutLink) {
-            AuthFlow.logoutLink.removeEventListener('click', AuthFlow.handleLogout); // Prevent multiple listeners
+            AuthFlow.logoutLink.removeEventListener('click', AuthFlow.handleLogout);
             AuthFlow.logoutLink.addEventListener('click', AuthFlow.handleLogout);
         }
 
@@ -101,19 +108,6 @@ const AuthFlow = {
             AuthFlow.forgotPasswordLink.addEventListener('click', AuthFlow.handleForgotPasswordLinkClick);
         }
 
-        if (AuthFlow.goToProfileCompletionBtn) {
-            AuthFlow.goToProfileCompletionBtn.addEventListener('click', () => {
-                if (AppCore && typeof AppCore.navigateToPage === 'function') {
-                    AppCore.navigateToPage('page-profile', UI.getElement('a[data-page="page-profile"]'), 'Lengkapi Profil');
-                    if (AuthFlow.profileCompletionOverlay) {
-                        UI.hideElement(AuthFlow.profileCompletionOverlay);
-                        document.body.style.overflow = ''; // Pastikan scroll body kembali normal
-                    }
-                }
-            });
-        }
-
-        // Show login form by default if auth container is visible
         if (AuthFlow.authContainer && AuthFlow.authContainer.style.display !== 'none') {
             AuthFlow.showLoginForm();
         }
@@ -125,7 +119,7 @@ const AuthFlow = {
         if (AuthFlow.loginForm) UI.showElement(AuthFlow.loginForm, 'block');
         if (AuthFlow.registerForm) UI.hideElement(AuthFlow.registerForm);
         if (AuthFlow.registerMessageDiv) UI.hideMessage(AuthFlow.registerMessageDiv);
-        if (AuthFlow.loginForm) UI.resetForm(AuthFlow.loginForm); // Reset form fields
+        if (AuthFlow.loginForm) UI.resetForm(AuthFlow.loginForm);
         document.title = `${window.sikmaApp.appName || 'SIKMA'} - Login`;
     },
 
@@ -133,20 +127,17 @@ const AuthFlow = {
         if (AuthFlow.loginForm) UI.hideElement(AuthFlow.loginForm);
         if (AuthFlow.registerForm) UI.showElement(AuthFlow.registerForm, 'block');
         if (AuthFlow.loginMessageDiv) UI.hideMessage(AuthFlow.loginMessageDiv);
-        if (AuthFlow.registerForm) UI.resetForm(AuthFlow.registerForm); // Reset form fields
+        if (AuthFlow.registerForm) UI.resetForm(AuthFlow.registerForm);
         document.title = `${window.sikmaApp.appName || 'SIKMA'} - Daftar`;
     },
 
     handleLoginSubmit: async (e) => {
         e.preventDefault();
-        if (AuthFlow.loginMessageDiv) UI.hideMessage(AuthFlow.loginMessageDiv);
+        if (!AuthFlow.loginForm || !AuthFlow.loginMessageDiv || !AuthFlow.loginSubmitBtn) return;
+        UI.hideMessage(AuthFlow.loginMessageDiv);
         const formData = new FormData(AuthFlow.loginForm);
-        // 'remember_me' checkbox value is 'on' if checked, or null if not.
-        // Backend should check for its existence.
-        // FormData already includes checkbox value if checked.
-
+        
         UI.showButtonSpinner(AuthFlow.loginSubmitBtn, 'Login', 'Proses Login...');
-
         const response = await Api.login(formData);
         UI.hideButtonSpinner(AuthFlow.loginSubmitBtn);
 
@@ -155,40 +146,37 @@ const AuthFlow = {
             window.sikmaApp.initialUserData = response.user;
             
             UI.hideElement(AuthFlow.authContainer);
-            UI.showElement(AuthFlow.appContainer, 'flex'); // appContainer uses flex
+            UI.showElement(AuthFlow.appContainer, 'flex');
             
-            AppCore.initializeMainApp(); // Initialize the main application UI and logic
-            AuthFlow.checkInitialProfileCompletion(); // Check and handle profile completion
-
+            AppCore.initializeMainApp();
+            AuthFlow.checkInitialProfileCompletion();
         } else {
-            const errorMessage = response.errors ? response.errors : (response.message || 'Login gagal, coba lagi.');
+            const errorMessage = response.errors ? UI.formatErrors(response.errors) : (response.message || 'Login gagal, coba lagi.');
             UI.showMessage(AuthFlow.loginMessageDiv, errorMessage, 'error');
         }
     },
 
     handleRegisterSubmit: async (e) => {
         e.preventDefault();
-        if (AuthFlow.registerMessageDiv) UI.hideMessage(AuthFlow.registerMessageDiv);
+        if (!AuthFlow.registerForm || !AuthFlow.registerMessageDiv || !AuthFlow.registerSubmitBtn || !AuthFlow.registerTermsCheckbox) return;
+        UI.hideMessage(AuthFlow.registerMessageDiv);
         
-        // Basic client-side validation for terms
-        if (AuthFlow.registerTermsCheckbox && !AuthFlow.registerTermsCheckbox.checked) {
+        if (!AuthFlow.registerTermsCheckbox.checked) {
             UI.showMessage(AuthFlow.registerMessageDiv, 'Anda harus menyetujui Syarat & Ketentuan untuk mendaftar.', 'error');
             return;
         }
 
         const formData = new FormData(AuthFlow.registerForm);
         UI.showButtonSpinner(AuthFlow.registerSubmitBtn, 'Daftar', 'Proses Daftar...');
-
         const response = await Api.register(formData);
         UI.hideButtonSpinner(AuthFlow.registerSubmitBtn);
 
         if (response.status === 'success') {
-            UI.showMessage(AuthFlow.registerMessageDiv, response.message || 'Registrasi berhasil! Silakan login.', 'success', 8000); // Longer display
+            UI.showMessage(AuthFlow.registerMessageDiv, response.message || 'Registrasi berhasil! Silakan login.', 'success', 8000);
             UI.resetForm(AuthFlow.registerForm);
-            setTimeout(AuthFlow.showLoginForm, 3000); // Switch to login form after a delay
+            setTimeout(AuthFlow.showLoginForm, 3000);
         } else {
-            // Display detailed errors if available
-            const errorMessage = response.errors ? response.errors : (response.message || 'Registrasi gagal, coba lagi.');
+            const errorMessage = response.errors ? UI.formatErrors(response.errors) : (response.message || 'Registrasi gagal, coba lagi.');
             UI.showMessage(AuthFlow.registerMessageDiv, errorMessage, 'error');
         }
     },
@@ -196,12 +184,8 @@ const AuthFlow = {
     handleLogout: async (e) => {
         if (e) e.preventDefault();
         
-        // Optional: Show a confirmation dialog
-        // const confirmLogout = await UI.showConfirmationModal("Konfirmasi Logout", "Apakah Anda yakin ingin keluar dari aplikasi?");
-        // if (!confirmLogout) return;
-
         const response = await Api.logout();
-        if (response.status === 'success' || response.action === 'logout_required') { // Handle if session already expired on server
+        if (response.status === 'success' || response.action === 'logout_required') {
             window.sikmaApp.isUserLoggedIn = false;
             window.sikmaApp.initialUserData = null;
             
@@ -210,25 +194,25 @@ const AuthFlow = {
             UI.showElement(AuthFlow.authContainer, 'flex');
             AuthFlow.showLoginForm();
             
-            // Clear theme from localStorage and cookie (AppCore might also do this)
             localStorage.removeItem('theme');
             localStorage.removeItem('sidebarCollapsed');
             document.cookie = "theme=;path=/;max-age=0;SameSite=Lax";
-            document.body.classList.remove('dark-theme'); // Ensure theme is visually reset
+            document.body.classList.remove('dark-theme', 'light-theme'); // Remove specific themes
+            document.body.classList.add('light-theme'); // Default to light
 
             console.log("AuthFlow: User logged out successfully.");
         } else {
-            // Show message in header or a global notification area
-            const headerMessageArea = UI.getElement('#pageHeaderMessage') || UI.getElement('#pageHeader'); // Assuming a message area in header
-            UI.showMessage(headerMessageArea || 'body', response.message || 'Logout gagal.', 'error', 3000);
+            const headerMessageArea = UI.getElement('#pageHeaderMessage') || UI.getElement('#pageHeader');
+            UI.showMessage(headerMessageArea || document.body, response.message || 'Logout gagal.', 'error', 3000);
         }
     },
 
+    /* // Commenting out checkSessionStatus as grep found no explicit calls.
+       // This function was intended to check session status if PHP didn't pre-initialize user state.
+       // If restored, ensure it's called appropriately (e.g. if app is loaded without PHP user data).
     checkSessionStatus: async () => {
-        // Called if PHP didn't initialize the app (e.g., user opened a new tab)
         if (window.sikmaApp.isUserLoggedIn && window.sikmaApp.initialUserData && window.sikmaApp.mainAppFullyInitialized) {
-            // Already handled by PHP pre-load or a previous check, and app is running
-            AuthFlow.checkInitialProfileCompletion(); // Re-check profile completion state
+            AuthFlow.checkInitialProfileCompletion();
             return;
         }
 
@@ -243,7 +227,6 @@ const AuthFlow = {
             if (!window.sikmaApp.mainAppFullyInitialized) {
                 AppCore.initializeMainApp();
             } else {
-                // App was initialized but maybe user data got stale, update UI
                 UI.updateSharedUserUI(response.user);
             }
             AuthFlow.checkInitialProfileCompletion();
@@ -251,17 +234,18 @@ const AuthFlow = {
             window.sikmaApp.isUserLoggedIn = false;
             window.sikmaApp.initialUserData = null;
             if (window.sikmaApp.mainAppFullyInitialized) {
-                AppCore.resetMainAppUI(); // Reset if app was running
+                AppCore.resetMainAppUI();
             }
             UI.hideElement(AuthFlow.appContainer);
             UI.showElement(AuthFlow.authContainer, 'flex');
             AuthFlow.showLoginForm();
         }
     },
+    */
 
     checkInitialProfileCompletion: () => {
         if (!window.sikmaApp.isUserLoggedIn || !window.sikmaApp.initialUserData) {
-            return; // Not logged in
+            return;
         }
         
         const needsCompletion = !window.sikmaApp.initialUserData.is_profile_complete;
@@ -270,43 +254,36 @@ const AuthFlow = {
         if (needsCompletion) {
             if (AuthFlow.profileCompletionOverlay) {
                 UI.showElement(AuthFlow.profileCompletionOverlay, 'flex');
-                document.body.style.overflow = 'hidden'; // Prevent body scroll
-                // Pesan sudah ada di HTML, bisa diupdate jika perlu
-                // UI.showMessage(AuthFlow.profileCompletionMessageDiv, 'Harap lengkapi profil Anda untuk melanjutkan.', 'info', 0);
+                document.body.style.overflow = 'hidden';
             } else {
-                UI.showMessage(UI.getElement('#pageHeader') || 'body', 'Profil Anda belum lengkap. Harap lengkapi data diri Anda.', 'warning', 0);
+                UI.showMessage(UI.getElement('#pageHeader') || document.body, 'Profil Anda belum lengkap. Harap lengkapi data diri Anda.', 'warning', 0);
             }
-            
-            AppCore.restrictNavigation(true, 'page-profile'); // Restrict nav, allow 'page-profile'
-            // Navigasi ke halaman profil akan dihandle oleh tombol di overlay atau otomatis jika diinginkan
-            // AppCore.navigateToPage('page-profile', null, 'Lengkapi Profil'); 
+            AppCore.restrictNavigation(true, 'page-profile');
         } else {
             if (AuthFlow.profileCompletionOverlay && AuthFlow.profileCompletionOverlay.style.display !== 'none') {
                 UI.hideElement(AuthFlow.profileCompletionOverlay);
                 document.body.style.overflow = '';
             }
-            AppCore.restrictNavigation(false); // Allow full navigation
+            AppCore.restrictNavigation(false);
         }
     },
 
     handleForgotPasswordLinkClick: (e) => {
         e.preventDefault();
-        // Sembunyikan form login/register, tampilkan UI Lupa Password (bisa modal atau view baru)
         const email = prompt("Masukkan alamat email Anda untuk reset password:");
         if (email && email.trim() !== "") {
             AuthFlow.handleForgotPasswordSubmit(email.trim());
-        } else if (email !== null) { // User tidak cancel tapi input kosong
+        } else if (email !== null) {
             UI.showMessage(AuthFlow.loginMessageDiv, "Alamat email tidak boleh kosong.", "error");
         }
     },
 
     handleForgotPasswordSubmit: async (email) => {
-        if (AuthFlow.loginMessageDiv) UI.hideMessage(AuthFlow.loginMessageDiv);
-        // UI.showButtonSpinner(someButton, 'Kirim Instruksi'); // Jika ada tombol khusus
+        if (!AuthFlow.loginMessageDiv) return;
+        UI.hideMessage(AuthFlow.loginMessageDiv);
         UI.showMessage(AuthFlow.loginMessageDiv, "Memproses permintaan reset password...", "info", 0);
 
         const response = await Api.forgotPassword(email);
-        // UI.hideButtonSpinner(someButton);
 
         if (response.status === 'success') {
             UI.showMessage(AuthFlow.loginMessageDiv, response.message || "Jika email terdaftar, instruksi reset password telah dikirim.", "success", 10000);
